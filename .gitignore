@@ -1,2 +1,2 @@
 api/config_env.php
-api/storage/ltweb.sqlite
+*.sqlite
