@@ -3,7 +3,10 @@
     <div class="card">
       <h1>Trang chu</h1>
       <p>Chon chuc nang de bat dau.</p>
-      <a class="link" href="/teachers/register">Dang ky giao vien</a>
+      <div class="links">
+        <RouterLink class="link" to="/teachers/register">Dang ky giao vien</RouterLink>
+        <RouterLink class="link" to="/transactions/borrow">Muon thiet bi</RouterLink>
+      </div>
     </div>
   </div>
 </template>
@@ -31,9 +34,14 @@
   margin: 0 0 12px;
 }
 
+.links {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
 .link {
   display: inline-block;
-  margin-top: 12px;
   padding: 10px 16px;
   border-radius: 12px;
   background: #2e6db4;

@@ -1,6 +1,8 @@
 <script setup>
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const step = ref('input')
 const submitting = ref(false)
 const serverError = ref('')
@@ -131,7 +133,7 @@ const goEdit = () => {
 }
 
 const goHome = () => {
-  window.location.href = '/'
+  router.push('/')
 }
 
 const submit = async () => {
