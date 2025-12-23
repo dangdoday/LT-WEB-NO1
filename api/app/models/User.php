@@ -19,25 +19,13 @@ class User
     public static function create($data)
     {
         $pdo = get_db_connection();
-        // Use RETURNING id for PostgreSQL to get the inserted id.
-        if (defined('DB_DRIVER') && DB_DRIVER === 'pgsql') {
-            $stmt = $pdo->prepare('INSERT INTO users (name, email, password) VALUES (:name, :email, :password) RETURNING id');
-            $stmt->execute([
-                'name' => $data['name'] ?? null,
-                'email' => $data['email'] ?? null,
-                'password' => $data['password'] ?? null,
-            ]);
-            $inserted = $stmt->fetch();
-            $id = $inserted ? $inserted['id'] : null;
-        } else {
-            $stmt = $pdo->prepare('INSERT INTO users (name, email, password) VALUES (:name, :email, :password)');
-            $stmt->execute([
-                'name' => $data['name'] ?? null,
-                'email' => $data['email'] ?? null,
-                'password' => $data['password'] ?? null,
-            ]);
-            $id = $pdo->lastInsertId();
-        }
+        $stmt = $pdo->prepare('INSERT INTO users (name, email, password) VALUES (:name, :email, :password)');
+        $stmt->execute([
+            'name' => $data['name'] ?? null,
+            'email' => $data['email'] ?? null,
+            'password' => $data['password'] ?? null,
+        ]);
+        $id = $pdo->lastInsertId();
 
         return ['id' => $id, 'name' => $data['name'] ?? null, 'email' => $data['email'] ?? null];
     }
