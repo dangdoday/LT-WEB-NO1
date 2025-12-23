@@ -1,7 +1,7 @@
 <script setup>
-import TeacherRegister from './pages/TeacherRegister.vue'
+import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <TeacherRegister />
+  <RouterView />
 </template>
