@@ -1,371 +1,527 @@
+<script setup>
+import { computed, onMounted, reactive, ref } from "vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+const step = ref("input");
+const loading = ref(true);
+const loadError = ref("");
+const submitting = ref(false);
+const serverError = ref("");
+
+const form = reactive({
+  device_id: "",
+  teacher_id: "",
+  classroom_id: "",
+  start_transaction_plan: "",
+  end_transaction_plan: "",
+  comment: "",
+});
+
+const errors = reactive({
+  device_id: "",
+  teacher_id: "",
+  classroom_id: "",
+  start_transaction_plan: "",
+  end_transaction_plan: "",
+});
+
+const options = reactive({
+  devices: [],
+  teachers: [],
+  classrooms: [],
+});
+
+const apiBase = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+
+const selectedDevice = computed(() => {
+  return options.devices.find(
+    (item) => String(item.id) === String(form.device_id)
+  );
+});
+
+const selectedTeacher = computed(() => {
+  return options.teachers.find(
+    (item) => String(item.id) === String(form.teacher_id)
+  );
+});
+
+const selectedClassroom = computed(() => {
+  return options.classrooms.find(
+    (item) => String(item.id) === String(form.classroom_id)
+  );
+});
+
+const resetErrors = () => {
+  errors.device_id = "";
+  errors.teacher_id = "";
+  errors.classroom_id = "";
+  errors.start_transaction_plan = "";
+  errors.end_transaction_plan = "";
+};
+
+const validate = () => {
+  resetErrors();
+  let ok = true;
+
+  if (!form.device_id) {
+    errors.device_id = "Hay chon thiet bi.";
+    ok = false;
+  }
+  if (!form.teacher_id) {
+    errors.teacher_id = "Hay chon giao vien.";
+    ok = false;
+  }
+  if (!form.classroom_id) {
+    errors.classroom_id = "Hay chon lop hoc.";
+    ok = false;
+  }
+  if (!form.start_transaction_plan) {
+    errors.start_transaction_plan = "Hay chon thoi gian bat dau.";
+    ok = false;
+  }
+  if (!form.end_transaction_plan) {
+    errors.end_transaction_plan = "Hay chon thoi gian ket thuc.";
+    ok = false;
+  }
+
+  return ok;
+};
+
+const goConfirm = () => {
+  serverError.value = "";
+  if (validate()) {
+    step.value = "confirm";
+  }
+};
+
+const goEdit = () => {
+  step.value = "input";
+};
+
+const goHome = () => {
+  router.push("/");
+};
+
+const submit = async () => {
+  if (submitting.value) return;
+  submitting.value = true;
+  serverError.value = "";
+
+  try {
+    const response = await fetch(`${apiBase}/borrow_device.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        device_id: form.device_id,
+        teacher_id: form.teacher_id,
+        classroom_id: form.classroom_id,
+        start_transaction_plan: form.start_transaction_plan,
+        end_transaction_plan: form.end_transaction_plan,
+        comment: form.comment.trim(),
+      }),
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (payload.fields) {
+        Object.keys(payload.fields).forEach((key) => {
+          if (errors[key] !== undefined) {
+            errors[key] = payload.fields[key];
+          }
+        });
+      }
+      serverError.value = payload.error || "Tao phieu muon that bai.";
+      step.value = "input";
+      return;
+    }
+
+    step.value = "complete";
+  } catch (error) {
+    serverError.value = "Khong the ket noi toi may chu.";
+    step.value = "input";
+  } finally {
+    submitting.value = false;
+  }
+};
+
+onMounted(async () => {
+  try {
+    const response = await fetch(`${apiBase}/transaction_form.php`);
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error || "Load failed");
+    }
+    options.devices = payload.devices || [];
+    options.teachers = payload.teachers || [];
+    options.classrooms = payload.classrooms || [];
+  } catch (error) {
+    loadError.value = "Khong tai duoc du lieu. Vui long thu lai.";
+  } finally {
+    loading.value = false;
+  }
+});
+</script>
+
 <template>
-  <div class="borrow-device-container">
-    <h1>Mượn Thiết Bị</h1>
-    
-    <form @submit.prevent="handleSubmit" class="borrow-form">
-      <!-- Tên thiết bị -->
-      <div class="form-group">
-        <label for="device_id">
-          Tên thiết bị <span class="required">*</span>
-        </label>
-        <select 
-          id="device_id" 
-          v-model="formData.device_id"
-          :class="{ 'error': errors.device_id }"
-        >
-          <option value="">-- Chọn thiết bị --</option>
-          <option 
-            v-for="device in devices" 
-            :key="device.id" 
-            :value="device.id"
+  <div class="page">
+    <div class="card">
+      <header class="card__header">
+        <div>
+          <p class="eyebrow">Borrow device</p>
+          <h1>Muon thiet bi</h1>
+        </div>
+        <div class="step-pill">
+          <span v-if="step === 'input'">Input</span>
+          <span v-else-if="step === 'confirm'">Confirm</span>
+          <span v-else>Complete</span>
+        </div>
+      </header>
+
+      <div v-if="loading" class="loading">Dang tai du lieu...</div>
+      <div v-else-if="loadError" class="error">{{ loadError }}</div>
+
+      <form
+        v-else-if="step === 'input'"
+        class="form"
+        @submit.prevent="goConfirm"
+      >
+        <div class="form-grid">
+          <label for="teacher">Giao vien</label>
+          <div>
+            <select id="teacher" v-model="form.teacher_id">
+              <option disabled value="">Chon giao vien</option>
+              <option
+                v-for="item in options.teachers"
+                :key="item.id"
+                :value="item.id"
+              >
+                {{ item.name }}
+              </option>
+            </select>
+            <p v-if="errors.teacher_id" class="error">
+              {{ errors.teacher_id }}
+            </p>
+          </div>
+
+          <label for="device">Thiet bi</label>
+          <div>
+            <select id="device" v-model="form.device_id">
+              <option disabled value="">Chon thiet bi</option>
+              <option
+                v-for="item in options.devices"
+                :key="item.id"
+                :value="item.id"
+              >
+                {{ item.name }}
+              </option>
+            </select>
+            <p v-if="errors.device_id" class="error">{{ errors.device_id }}</p>
+          </div>
+
+          <label for="classroom">Lop hoc</label>
+          <div>
+            <select id="classroom" v-model="form.classroom_id">
+              <option disabled value="">Chon lop hoc</option>
+              <option
+                v-for="item in options.classrooms"
+                :key="item.id"
+                :value="item.id"
+              >
+                {{ item.name }}
+              </option>
+            </select>
+            <p v-if="errors.classroom_id" class="error">
+              {{ errors.classroom_id }}
+            </p>
+          </div>
+
+          <label for="start">Bat dau</label>
+          <div>
+            <input
+              id="start"
+              v-model="form.start_transaction_plan"
+              type="datetime-local"
+            />
+            <p v-if="errors.start_transaction_plan" class="error">
+              {{ errors.start_transaction_plan }}
+            </p>
+          </div>
+
+          <label for="end">Ket thuc</label>
+          <div>
+            <input
+              id="end"
+              v-model="form.end_transaction_plan"
+              type="datetime-local"
+            />
+            <p v-if="errors.end_transaction_plan" class="error">
+              {{ errors.end_transaction_plan }}
+            </p>
+          </div>
+
+          <label for="comment">Ghi chu</label>
+          <textarea
+            id="comment"
+            v-model="form.comment"
+            rows="4"
+            placeholder="Mo ta them (neu co)"
+          ></textarea>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="primary">Xac nhan</button>
+          <p v-if="serverError" class="error">{{ serverError }}</p>
+        </div>
+      </form>
+
+      <div v-else-if="step === 'confirm'" class="confirm">
+        <div class="form-grid">
+          <span class="label">Giao vien</span>
+          <span class="value">{{ selectedTeacher?.name || "-" }}</span>
+
+          <span class="label">Thiet bi</span>
+          <span class="value">{{ selectedDevice?.name || "-" }}</span>
+
+          <span class="label">Lop hoc</span>
+          <span class="value">{{ selectedClassroom?.name || "-" }}</span>
+
+          <span class="label">Bat dau</span>
+          <span class="value">{{ form.start_transaction_plan }}</span>
+
+          <span class="label">Ket thuc</span>
+          <span class="value">{{ form.end_transaction_plan }}</span>
+
+          <span class="label">Ghi chu</span>
+          <div class="value description-box">{{ form.comment || "-" }}</div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="ghost" @click="goEdit">Sua lai</button>
+          <button
+            type="button"
+            class="primary"
+            :disabled="submitting"
+            @click="submit"
           >
-            {{ device.name }}
-          </option>
-        </select>
-        <span v-if="errors.device_id" class="error-message">
-          {{ errors.device_id }}
-        </span>
+            {{ submitting ? "Dang gui..." : "Dang ky muon" }}
+          </button>
+          <p v-if="serverError" class="error">{{ serverError }}</p>
+        </div>
       </div>
 
-      <!-- Giáo viên -->
-      <div class="form-group">
-        <label for="teacher_id">
-          Giáo viên <span class="required">*</span>
-        </label>
-        <select 
-          id="teacher_id" 
-          v-model="formData.teacher_id"
-          :class="{ 'error': errors.teacher_id }"
-        >
-          <option value="">-- Chọn giáo viên --</option>
-          <option 
-            v-for="teacher in teachers" 
-            :key="teacher.id" 
-            :value="teacher.id"
-          >
-            {{ teacher.name }}
-          </option>
-        </select>
-        <span v-if="errors.teacher_id" class="error-message">
-          {{ errors.teacher_id }}
-        </span>
+      <div v-else class="complete">
+        <div class="complete__box">
+          <h2>Dang ky muon thanh cong</h2>
+          <p>Yeu cau muon thiet bi da duoc ghi nhan.</p>
+          <button type="button" class="primary" @click="goHome">
+            Tro ve trang chu
+          </button>
+        </div>
       </div>
-
-      <!-- Lớp học -->
-      <div class="form-group">
-        <label for="classroom_id">
-          Lớp học <span class="required">*</span>
-        </label>
-        <select 
-          id="classroom_id" 
-          v-model="formData.classroom_id"
-          :class="{ 'error': errors.classroom_id }"
-        >
-          <option value="">-- Chọn lớp học --</option>
-          <option 
-            v-for="classroom in classrooms" 
-            :key="classroom.id" 
-            :value="classroom.id"
-          >
-            {{ classroom.name }}
-          </option>
-        </select>
-        <span v-if="errors.classroom_id" class="error-message">
-          {{ errors.classroom_id }}
-        </span>
-      </div>
-
-      <!-- Thời gian bắt đầu -->
-      <div class="form-group">
-        <label for="start_transaction_plan">
-          Thời gian bắt đầu <span class="required">*</span>
-        </label>
-        <input 
-          type="datetime-local" 
-          id="start_transaction_plan" 
-          v-model="formData.start_transaction_plan"
-          :class="{ 'error': errors.start_transaction_plan }"
-        />
-        <span v-if="errors.start_transaction_plan" class="error-message">
-          {{ errors.start_transaction_plan }}
-        </span>
-      </div>
-
-      <!-- Thời gian kết thúc -->
-      <div class="form-group">
-        <label for="end_transaction_plan">
-          Thời gian kết thúc <span class="required">*</span>
-        </label>
-        <input 
-          type="datetime-local" 
-          id="end_transaction_plan" 
-          v-model="formData.end_transaction_plan"
-          :class="{ 'error': errors.end_transaction_plan }"
-        />
-        <span v-if="errors.end_transaction_plan" class="error-message">
-          {{ errors.end_transaction_plan }}
-        </span>
-      </div>
-
-      <!-- Submit button -->
-      <div class="form-actions">
-        <button type="submit" class="btn-submit" :disabled="isSubmitting">
-          {{ isSubmitting ? 'Đang xử lý...' : 'Mượn' }}
-        </button>
-      </div>
-
-      <!-- Success message -->
-      <div v-if="successMessage" class="success-message">
-        {{ successMessage }}
-      </div>
-    </form>
+    </div>
   </div>
 </template>
 
-<script>
-import { ref, onMounted } from 'vue';
-
-export default {
-  name: 'BorrowDevice',
-  setup() {
-    const formData = ref({
-      device_id: '',
-      teacher_id: '',
-      classroom_id: '',
-      start_transaction_plan: '',
-      end_transaction_plan: ''
-    });
-
-    const errors = ref({});
-    const devices = ref([]);
-    const teachers = ref([]);
-    const classrooms = ref([]);
-    const isSubmitting = ref(false);
-    const successMessage = ref('');
-
-    // Load form data (devices, teachers, classrooms)
-    const loadFormData = async () => {
-      try {
-        const response = await fetch('/api/transactions/form-data');
-        const data = await response.json();
-        
-        devices.value = data.devices || [];
-        teachers.value = data.teachers || [];
-        classrooms.value = data.classrooms || [];
-      } catch (error) {
-        console.error('Error loading form data:', error);
-      }
-    };
-
-    // Validate form
-    const validateForm = () => {
-      const newErrors = {};
-
-      if (!formData.value.device_id) {
-        newErrors.device_id = 'Hãy nhập tên thiết bị';
-      }
-
-      if (!formData.value.teacher_id) {
-        newErrors.teacher_id = 'Hãy nhập tên giáo viên';
-      }
-
-      if (!formData.value.classroom_id) {
-        newErrors.classroom_id = 'Hãy nhập mô tả lớp học';
-      }
-
-      if (!formData.value.start_transaction_plan) {
-        newErrors.start_transaction_plan = 'Hãy nhập mô tả chi tiết';
-      }
-
-      if (!formData.value.end_transaction_plan) {
-        newErrors.end_transaction_plan = 'Hãy chọn avatar';
-      }
-
-      errors.value = newErrors;
-      return Object.keys(newErrors).length === 0;
-    };
-
-    // Handle form submission
-    const handleSubmit = async () => {
-      // Clear previous messages
-      successMessage.value = '';
-      
-      // Validate
-      if (!validateForm()) {
-        return;
-      }
-
-      isSubmitting.value = true;
-
-      try {
-        const response = await fetch('/api/transactions/borrow', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(formData.value)
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-          successMessage.value = data.message || 'Mượn thiết bị thành công!';
-          
-          // Reset form
-          formData.value = {
-            device_id: '',
-            teacher_id: '',
-            classroom_id: '',
-            start_transaction_plan: '',
-            end_transaction_plan: ''
-          };
-          errors.value = {};
-
-          // Hide success message after 3 seconds
-          setTimeout(() => {
-            successMessage.value = '';
-          }, 3000);
-        } else {
-          // Server-side validation errors
-          if (data.errors) {
-            errors.value = data.errors;
-          } else {
-            alert(data.message || 'Có lỗi xảy ra!');
-          }
-        }
-      } catch (error) {
-        console.error('Error submitting form:', error);
-        alert('Có lỗi xảy ra khi gửi form!');
-      } finally {
-        isSubmitting.value = false;
-      }
-    };
-
-    onMounted(() => {
-      loadFormData();
-    });
-
-    return {
-      formData,
-      errors,
-      devices,
-      teachers,
-      classrooms,
-      isSubmitting,
-      successMessage,
-      handleSubmit
-    };
-  }
-};
-</script>
-
 <style scoped>
-.borrow-device-container {
-  max-width: 600px;
-  margin: 50px auto;
-  padding: 30px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap");
+
+:global(:root) {
+  --paper: #f5f0e6;
+  --ink: #1d2330;
+  --accent: #2e6db4;
+  --accent-2: #e0a42c;
+  --line: #cdd7e5;
+  --muted: #5b6475;
+  --shadow: 0 24px 60px rgba(30, 35, 55, 0.12);
 }
 
-h1 {
-  text-align: center;
-  color: #333;
-  margin-bottom: 30px;
+:global(body) {
+  margin: 0;
+  font-family: "Manrope", system-ui, sans-serif;
+  background: radial-gradient(circle at top, #f0e3cf 0%, #f5f0e6 45%) no-repeat,
+    linear-gradient(135deg, #f5f0e6 0%, #dbe4f2 100%);
+  color: var(--ink);
 }
 
-.borrow-form {
+.page {
+  min-height: 100vh;
+  padding: 48px 20px 80px;
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  align-items: flex-start;
+  justify-content: center;
 }
 
-.form-group {
+.card {
+  width: min(920px, 100%);
+  background: #fffdf8;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 28px 32px 36px;
+  box-shadow: var(--shadow);
+  animation: rise 0.6s ease;
+}
+
+.card__header {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
-label {
+.card__header h1 {
+  margin: 8px 0 0;
+  font-size: 32px;
+  letter-spacing: -0.02em;
+}
+
+.eyebrow {
+  text-transform: uppercase;
   font-weight: 600;
-  margin-bottom: 8px;
-  color: #555;
-}
-
-.required {
-  color: #e74c3c;
-}
-
-select,
-input[type="datetime-local"] {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: border-color 0.3s;
-}
-
-select:focus,
-input[type="datetime-local"]:focus {
-  outline: none;
-  border-color: #3498db;
-}
-
-select.error,
-input.error {
-  border-color: #e74c3c;
-}
-
-.error-message {
-  color: #e74c3c;
   font-size: 12px;
-  margin-top: 5px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  margin: 0;
 }
 
-.form-actions {
-  margin-top: 10px;
+.step-pill {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(46, 109, 180, 0.12);
+  color: var(--accent);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.1em;
 }
 
-.btn-submit {
+.form-grid {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 16px 20px;
+}
+
+label,
+.label {
+  font-weight: 600;
+  color: var(--muted);
+  align-self: center;
+}
+
+input,
+select,
+textarea {
   width: 100%;
-  padding: 12px;
-  background-color: #3498db;
-  color: white;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.actions {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+button {
   border: none;
-  border-radius: 4px;
-  font-size: 16px;
+  border-radius: 14px;
+  padding: 12px 24px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-family: inherit;
 }
 
-.btn-submit:hover:not(:disabled) {
-  background-color: #2980b9;
+button.primary {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 10px 20px rgba(46, 109, 180, 0.2);
 }
 
-.btn-submit:disabled {
-  background-color: #95a5a6;
+button.ghost {
+  background: #eef2f9;
+  color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
-.success-message {
-  padding: 15px;
-  background-color: #2ecc71;
-  color: white;
-  border-radius: 4px;
-  text-align: center;
-  margin-top: 20px;
-  animation: slideIn 0.3s ease-out;
+.error {
+  margin: 6px 0 0;
+  color: #b13535;
+  font-size: 13px;
 }
 
-@keyframes slideIn {
+.confirm .value {
+  font-weight: 600;
+  align-self: center;
+}
+
+.description-box {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  background: #fff;
+  min-height: 120px;
+  white-space: pre-wrap;
+}
+
+.complete {
+  text-align: center;
+  padding: 40px 0 20px;
+}
+
+.complete__box {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 28px 32px;
+  border-radius: 20px;
+  background: #f3f6fb;
+}
+
+.loading {
+  padding: 16px 0 8px;
+  color: var(--muted);
+}
+
+@keyframes rise {
   from {
+    transform: translateY(18px);
     opacity: 0;
-    transform: translateY(-10px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 24px;
+  }
+
+  .card__header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>
