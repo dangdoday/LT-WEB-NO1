@@ -130,6 +130,10 @@ const goEdit = () => {
   step.value = 'input'
 }
 
+const goHome = () => {
+  window.location.href = '/'
+}
+
 const submit = async () => {
   if (submitting.value) return
   submitting.value = true
@@ -281,7 +285,7 @@ const submit = async () => {
         <div class="complete__box">
           <h2>Dang ky thanh cong</h2>
           <p>Ban da dang ky giao vien thanh cong.</p>
-          <button type="button" class="primary" @click="goEdit">Tro ve trang nhap</button>
+          <button type="button" class="primary" @click="goHome">Tro ve trang chu</button>
         </div>
       </div>
     </div>
