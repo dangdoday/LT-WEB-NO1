@@ -55,7 +55,19 @@ $allowed = [
     'image/gif' => 'gif',
 ];
 
-$mime = mime_content_type($avatar['tmp_name']);
+if (function_exists('mime_content_type')) {
+    $mime = mime_content_type($avatar['tmp_name']);
+} elseif (function_exists('finfo_open')) {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = $finfo ? finfo_file($finfo, $avatar['tmp_name']) : false;
+    if ($finfo) {
+        finfo_close($finfo);
+    }
+} else {
+    $imageInfo = getimagesize($avatar['tmp_name']);
+    $mime = $imageInfo['mime'] ?? false;
+}
+
 if (!isset($allowed[$mime])) {
     http_response_code(422);
     echo json_encode(['error' => 'Invalid file type', 'fields' => ['avatarFile' => 'Avatar khong hop le.']]);
