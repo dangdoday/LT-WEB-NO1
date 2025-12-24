@@ -7,6 +7,7 @@
         <RouterLink class="link" to="/teachers/register">Dang ky giao vien</RouterLink>
         <RouterLink class="link" to="/transactions/borrow">Muon thiet bi</RouterLink>
         <RouterLink class="link" to="/devices/register">Dang ky thiet bi</RouterLink>
+        <RouterLink class="link" to="/classrooms/create">Tao lop hoc</RouterLink>
       </div>
     </div>
   </div>
