@@ -27,4 +27,36 @@ class Transaction
 
         return $pdo->lastInsertId();
     }
+
+    public static function search($deviceName = '', $teacherId = '')
+    {
+        $pdo = get_db_connection();
+
+        $sql = "SELECT t.id, 
+                   d.name as device_name, 
+                   t.start_transaction_plan, 
+                   t.end_transaction_plan, 
+                   t.created_at as actual_return_time, 
+                   te.name as teacher_name 
+            FROM transactions t
+            JOIN devices d ON t.device_id = d.id
+            JOIN teachers te ON t.teacher_id = te.id
+            WHERE 1=1";
+
+        $params = [];
+        if (!empty($deviceName)) {
+            $sql .= " AND d.name LIKE ?";
+            $params[] = "%$deviceName%";
+        }
+        if (!empty($teacherId)) {
+            $sql .= " AND t.teacher_id = ?";
+            $params[] = $teacherId;
+        }
+
+        $sql .= " ORDER BY t.start_transaction_plan DESC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
