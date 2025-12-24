@@ -6,6 +6,7 @@
       <div class="links">
         <RouterLink class="link" to="/teachers/register">Dang ky giao vien</RouterLink>
         <RouterLink class="link" to="/transactions/borrow">Muon thiet bi</RouterLink>
+        <RouterLink class="link" to="/devices/register">Dang ky thiet bi</RouterLink>
       </div>
     </div>
   </div>
