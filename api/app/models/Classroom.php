@@ -15,4 +15,17 @@ class Classroom
         $stmt->execute(['id' => $id]);
         return $stmt->fetch();
     }
+
+    public static function create($data)
+    {
+        $pdo = get_db_connection();
+        $stmt = $pdo->prepare('INSERT INTO classrooms (name, avatar, description, building, updated, created) VALUES (:name, :avatar, :description, :building, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)');
+        $stmt->execute([
+            'name' => $data['name'] ?? null,
+            'avatar' => $data['avatar'] ?? null,
+            'description' => $data['description'] ?? null,
+            'building' => $data['building'] ?? null,
+        ]);
+        return $pdo->lastInsertId();
+    }
 }
