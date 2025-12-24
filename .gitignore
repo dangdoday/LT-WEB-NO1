@@ -1,15 +1,2 @@
-# ignore config
 api/config_env.php
-
-# ignore database
 *.sqlite
-*.db
-
-# node
-node_modules/
-
-# env
-.env
-
-# upload avatars
-api/web/avatar/
