@@ -9,6 +9,7 @@
         <RouterLink class="link" to="/history/borrow_device">Tra cuu muon thiet bi</RouterLink>
         <RouterLink class="link" to="/devices/register">Dang ky thiet bi</RouterLink>
         <RouterLink class="link" to="/classrooms/create">Tao lop hoc</RouterLink>
+        <RouterLink class="link" to="/password">Reset password</RouterLink>
       </div>
     </div>
   </div>
