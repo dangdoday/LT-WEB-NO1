@@ -10,6 +10,7 @@ return [
     'POST' => [
         '/auth/login' => ['/app/controllers/AuthController.php', 'AuthController', 'login'],
         '/users' => ['/app/controllers/UserController.php', 'UserController', 'create'],
+        '/classrooms' => ['/app/controllers/ClassroomController.php', 'ClassroomController', 'create'],
     ],
     'PUT' => [
     ],
