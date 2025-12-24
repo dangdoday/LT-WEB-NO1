@@ -19,18 +19,24 @@
       <div class="menu-grid">
         <div class="menu-card">
           <div class="menu-title">Phòng học</div>
+          <RouterLink class="menu-link" to="/classrooms/search">Tìm kiếm</RouterLink>
           <RouterLink class="menu-link" to="/classrooms/create">Thêm mới</RouterLink>
         </div>
         <div class="menu-card">
           <div class="menu-title">Giáo viên</div>
+          <RouterLink class="menu-link" to="/teachers/search">Tìm kiếm</RouterLink>
           <RouterLink class="menu-link" to="/teachers/register">Thêm mới</RouterLink>
         </div>
         <div class="menu-card">
           <div class="menu-title">Thiết bị</div>
+          <RouterLink class="menu-link" to="/devices/search">Tìm kiếm</RouterLink>
           <RouterLink class="menu-link" to="/devices/register">Thêm mới</RouterLink>
         </div>
         <div class="menu-card">
           <div class="menu-title">Mượn/trả thiết bị</div>
+          <RouterLink class="menu-link" to="/transactions/search">Tìm kiếm</RouterLink>
+          <RouterLink class="menu-link" to="/transactions/advanced-search">Tìm kiếm nâng cao</RouterLink>
+          <RouterLink class="menu-link" to="/transactions/return">Trả thiết bị</RouterLink>
           <RouterLink class="menu-link" to="/transactions/borrow">Mượn thiết bị</RouterLink>
           <RouterLink class="menu-link" to="/history/borrow_device">Lịch sử mượn thiết bị</RouterLink>
         </div>
