@@ -37,7 +37,7 @@ const search = async () => {
   serverError.value = "";
   try {
     const query = new URLSearchParams(filters).toString();
-    const res = await fetch(`${apiBase}/return_devices.php?${query}`);
+    const res = await fetch(`${apiBase}/return_device_list.php?${query}`);
     const result = await res.json();
     if (result.status === "success") {
       rows.value = result.data || [];
