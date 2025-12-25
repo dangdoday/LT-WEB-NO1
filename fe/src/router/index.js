@@ -5,6 +5,7 @@ import BorrowDevice from '../pages/BorrowDevice.vue'
 import HistoryBorrowDevice from '../pages/HistoryBorrowDevice.vue'
 import DeviceRegister from '../pages/DeviceRegister.vue'
 import ClassroomCreate from '../pages/ClassroomCreate.vue'
+import DeviceAdvancedSearch from '../pages/DeviceAdvancedSearch.vue'
 import Login from '../pages/Login.vue'
 import Register from '../pages/Register.vue'
 
@@ -17,6 +18,7 @@ const routes = [
   { path: '/transactions/borrow', name: 'borrow-device', component: BorrowDevice },
   { path: '/history/borrow_device', name: 'transaction-list', component: HistoryBorrowDevice },
   { path: '/devices/register', name: 'device-register', component: DeviceRegister },
+  { path: '/devices/advanced-search', name: 'device-advanced-search', component: DeviceAdvancedSearch },
 ]
 
 const router = createRouter({
@@ -41,7 +43,7 @@ router.beforeEach(async (to, from, next) => {
         return
       }
     }
-  } catch (e) {}
+  } catch (e) { }
   next({ name: 'login' })
 })
 
