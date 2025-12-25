@@ -27,12 +27,17 @@ if ($base !== '') {
 }
 
 // Simple dispatch: look for exact match, then method
+
 if (isset($routes[$method][$uri])) {
     $handler = $routes[$method][$uri];
     list($controllerFile, $class, $action) = $handler;
     require_once __DIR__ . $controllerFile;
-    $ctrl = new $class();
-    $ctrl->$action();
+    // Nếu là controller thì khởi tạo và gọi action, nếu không thì chỉ require file (file thuần PHP)
+    if ($class && $action) {
+        $ctrl = new $class();
+        $ctrl->$action();
+    }
+    // Nếu là file thuần (class hoặc action null)
     exit;
 }
 
