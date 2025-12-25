@@ -3,7 +3,7 @@
     <div class="card">
       <header class="card__header">
         <div>
-          <p class="eyebrow">Device Advance Search</p>
+          <p class="eyebrow">Device Advanced Search</p>
           <h1>Tìm kiếm nâng cao thiết bị</h1>
         </div>
       </header>
@@ -89,7 +89,7 @@ const fetchDevices = async () => {
     if (filters.value.keyword) params.append('keyword', filters.value.keyword);
     if (filters.value.status) params.append('status', filters.value.status);
     
-    const response = await fetch(`${apiBase}/devices/advance-search?${params.toString()}`);
+    const response = await fetch(`${apiBase}/devices/advanced-search?${params.toString()}`);
     const data = await response.json();
     devices.value = data;
   } catch (error) {

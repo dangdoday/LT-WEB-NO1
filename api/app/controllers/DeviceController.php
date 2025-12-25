@@ -9,7 +9,7 @@ class DeviceController
         jsonResponse($devices);
     }
 
-    public function advanceSearch()
+    public function advancedSearch()
     {
         $keyword = $_GET['keyword'] ?? '';
         $status = $_GET['status'] ?? '';
