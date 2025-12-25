@@ -28,7 +28,7 @@ const loadFilters = async () => {
     options.teachers = data.teachers || [];
     options.classrooms = data.classrooms || [];
   } catch {
-    serverError.value = "Không thể tải dữ liệu bộ lọc.";
+    serverError.value = "Khong the tai du lieu bo loc.";
   }
 };
 
@@ -42,10 +42,10 @@ const search = async () => {
     if (result.status === "success") {
       rows.value = result.data || [];
     } else {
-      serverError.value = result.error || "Không thể tải danh sách thiết bị.";
+      serverError.value = result.error || "Khong the tai danh sach thiet bi.";
     }
   } catch {
-    serverError.value = "Không thể kết nối đến server.";
+    serverError.value = "Khong the ket noi toi server.";
   } finally {
     loading.value = false;
   }
@@ -53,7 +53,7 @@ const search = async () => {
 
 const returnDevice = async (row) => {
   if (returningId.value) return;
-  const ok = window.confirm(`Bạn có thể trả ${row.device_name}?`);
+  const ok = window.confirm(`Ban co muon tra ${row.device_name}?`);
   if (!ok) return;
 
   returningId.value = String(row.device_id);
@@ -66,12 +66,12 @@ const returnDevice = async (row) => {
     });
     const result = await res.json().catch(() => ({}));
     if (!res.ok || result.error) {
-      serverError.value = result.error || "Trả thiết bị thất bại.";
+      serverError.value = result.error || "Tra thiet bi that bai.";
       return;
     }
     await search();
   } catch {
-    serverError.value = "Không thể kết nối đến server.";
+    serverError.value = "Khong the ket noi toi server.";
   } finally {
     returningId.value = "";
   }
@@ -100,23 +100,19 @@ onMounted(async () => {
       <div v-else>
         <div class="form-grid search-grid">
           <label>Thiet bi</label>
-          <input
-            v-model="filters.device_name"
-            type="text"
-            placeholder="Nhập tên thiết bị"
-          />
+          <input v-model="filters.device_name" type="text" placeholder="Nhap ten thiet bi" />
 
-          <label>Giáo viên</label>
+          <label>Giao vien</label>
           <select v-model="filters.teacher_id">
-            <option value="">Chọn giáo viên</option>
+            <option value="">Chon giao vien</option>
             <option v-for="t in options.teachers" :key="t.id" :value="t.id">
               {{ t.name }}
             </option>
           </select>
 
-          <label>Lớp học</label>
+          <label>Lop hoc</label>
           <select v-model="filters.classroom_id">
-            <option value="">Chọn lớp học</option>
+            <option value="">Chon lop hoc</option>
             <option v-for="c in options.classrooms" :key="c.id" :value="c.id">
               {{ c.name }}
             </option>
@@ -125,12 +121,12 @@ onMounted(async () => {
 
         <div class="actions">
           <button class="primary" @click="search" :disabled="loading">
-            {{ loading ? "..." : "Tìm kiếm" }}
+            {{ loading ? "..." : "Tim kiem" }}
           </button>
         </div>
 
         <div class="result-summary">
-          Số thiết bị tìm thấy: {{ rows.length }}
+          So thiet bi tim thay: {{ rows.length }}
         </div>
 
         <div class="table-wrapper">
@@ -138,9 +134,9 @@ onMounted(async () => {
             <thead>
               <tr>
                 <th>No</th>
-                <th>Tên thiết bị</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
+                <th>Ten thiet bi</th>
+                <th>Trang thai</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -161,16 +157,14 @@ onMounted(async () => {
                 </td>
               </tr>
               <tr v-if="rows.length === 0">
-                <td colspan="4" class="empty">Không tìm thấy dữ liệu</td>
+                <td colspan="4" class="empty">Khong tim thay du lieu</td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <div class="actions">
-          <button class="ghost" @click="router.push('/')">
-            Trở về trang chủ
-          </button>
+          <button class="ghost" @click="router.push('/')">Tro ve trang chu</button>
         </div>
       </div>
     </div>
