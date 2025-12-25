@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../pages/Home.vue'
 import TeacherRegister from '../pages/TeacherRegister.vue'
+import TeacherSearch from '../pages/TeacherSearch.vue'
 import BorrowDevice from '../pages/BorrowDevice.vue'
 import HistoryBorrowDevice from '../pages/HistoryBorrowDevice.vue'
 import DeviceRegister from '../pages/DeviceRegister.vue'
@@ -13,6 +14,7 @@ const routes = [
   { path: '/login', name: 'login', component: Login },
   { path: '/register', name: 'register', component: Register },
   { path: '/teachers/register', name: 'teacher-register', component: TeacherRegister },
+  { path: '/teachers/search', name: 'teacher-search', component: TeacherSearch },
   { path: '/classrooms/create', name: 'classroom-create', component: ClassroomCreate },
   { path: '/transactions/borrow', name: 'borrow-device', component: BorrowDevice },
   { path: '/history/borrow_device', name: 'transaction-list', component: HistoryBorrowDevice },
