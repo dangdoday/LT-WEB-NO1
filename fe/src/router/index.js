@@ -5,6 +5,7 @@ import BorrowDevice from '../pages/BorrowDevice.vue'
 import HistoryBorrowDevice from '../pages/HistoryBorrowDevice.vue'
 import DeviceRegister from '../pages/DeviceRegister.vue'
 import ClassroomCreate from '../pages/ClassroomCreate.vue'
+import ReturnDevice from '../pages/ReturnDevice.vue'
 import Login from '../pages/Login.vue'
 import Register from '../pages/Register.vue'
 
@@ -15,8 +16,10 @@ const routes = [
   { path: '/teachers/register', name: 'teacher-register', component: TeacherRegister },
   { path: '/classrooms/create', name: 'classroom-create', component: ClassroomCreate },
   { path: '/transactions/borrow', name: 'borrow-device', component: BorrowDevice },
+  { path: '/transactions/return', name: 'transaction-return', component: ReturnDevice },
   { path: '/history/borrow_device', name: 'transaction-list', component: HistoryBorrowDevice },
   { path: '/devices/register', name: 'device-register', component: DeviceRegister },
+  { path: '/devices/return', name: 'device-return', component: ReturnDevice },
 ]
 
 const router = createRouter({

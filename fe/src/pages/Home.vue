@@ -38,7 +38,7 @@
           <RouterLink class="menu-link" to="/transactions/search">Tìm kiếm</RouterLink>
           <RouterLink class="menu-link" to="/transactions/advanced-search">Tìm kiếm nâng cao</RouterLink>
           <RouterLink class="menu-link" to="/transactions/return">Trả thiết bị</RouterLink>
-          <!-- Đã xóa nút Mượn thiết bị -->
+
           <RouterLink class="menu-link" to="/history/borrow_device">Lịch sử mượn thiết bị</RouterLink>
         </div>
       </div>

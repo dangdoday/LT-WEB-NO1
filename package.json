@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "postinstall": "pnpm --prefix fe install",
     "start:api": "php -S 0.0.0.0:8000 -t api api/index.php",
     "start:fe": "pnpm --prefix fe run dev",
-    "start": "sh -c \"pnpm run start:api & pnpm run start:fe\""
+    "start": "concurrently -n API,FE \"pnpm run start:api\" \"pnpm run start:fe\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }
