@@ -31,6 +31,7 @@
         <div class="menu-card">
           <div class="menu-title">Thiết bị</div>
           <RouterLink class="menu-link" to="/devices/search">Tìm kiếm</RouterLink>
+          <RouterLink class="menu-link" to="/devices/advance-search">Tìm kiếm nâng cao</RouterLink>
           <RouterLink class="menu-link" to="/devices/register">Thêm mới</RouterLink>
         </div>
         <div class="menu-card">
