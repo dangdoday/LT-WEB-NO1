@@ -8,4 +8,13 @@ class DeviceController
         $devices = Device::all();
         jsonResponse($devices);
     }
+
+    public function search()
+    {
+        $keyword = $_GET['keyword'] ?? '';
+        $status = $_GET['status'] ?? '';
+
+        $devices = Device::search($keyword, $status);
+        jsonResponse($devices);
+    }
 }

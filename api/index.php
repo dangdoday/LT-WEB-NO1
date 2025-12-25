@@ -26,13 +26,19 @@ if ($base !== '') {
     $uri = preg_replace('#^' . preg_quote($base) . '#', '', $uri);
 }
 
-// Simple dispatch: look for exact match, then method
+// Simple dispatch: look for exact match in routes
 if (isset($routes[$method][$uri])) {
     $handler = $routes[$method][$uri];
     list($controllerFile, $class, $action) = $handler;
     require_once __DIR__ . $controllerFile;
     $ctrl = new $class();
     $ctrl->$action();
+    exit;
+}
+
+// Fallback: check if physical file exists for legacy support
+if ($uri !== '/' && file_exists(__DIR__ . $uri) && str_ends_with($uri, '.php')) {
+    require_once __DIR__ . $uri;
     exit;
 }
 

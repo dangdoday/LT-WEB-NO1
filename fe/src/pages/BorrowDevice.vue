@@ -146,6 +146,8 @@ const submit = async () => {
 };
 
 onMounted(async () => {
+  const queryDeviceId = router.currentRoute.value.query.device_id;
+
   try {
     const response = await fetch(`${apiBase}/transaction_form.php`);
     const payload = await response.json();
@@ -155,6 +157,11 @@ onMounted(async () => {
     options.devices = payload.devices || [];
     options.teachers = payload.teachers || [];
     options.classrooms = payload.classrooms || [];
+
+    // Set device_id AFTER options are loaded to ensure correct selection
+    if (queryDeviceId) {
+      form.device_id = queryDeviceId;
+    }
   } catch (error) {
     loadError.value = "Khong tai duoc du lieu. Vui long thu lai.";
   } finally {

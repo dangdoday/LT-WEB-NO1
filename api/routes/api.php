@@ -6,6 +6,7 @@ return [
         '/users' => ['/app/controllers/UserController.php', 'UserController', 'index'],
         '/classrooms' => ['/app/controllers/ClassroomController.php', 'ClassroomController', 'index'],
         '/devices' => ['/app/controllers/DeviceController.php', 'DeviceController', 'index'],
+        '/devices/search' => ['/app/controllers/DeviceController.php', 'DeviceController', 'search'],
     ],
     'POST' => [
         '/auth/login' => ['/app/controllers/AuthController.php', 'AuthController', 'login'],
