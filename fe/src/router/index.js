@@ -7,6 +7,7 @@ import DeviceRegister from '../pages/DeviceRegister.vue'
 import ClassroomCreate from '../pages/ClassroomCreate.vue'
 import Login from '../pages/Login.vue'
 import Register from '../pages/Register.vue'
+import ReturnDevice from '../pages/ReturnDevice.vue'
 
 const routes = [
   { path: '/', name: 'home', component: Home },
@@ -17,6 +18,7 @@ const routes = [
   { path: '/transactions/borrow', name: 'borrow-device', component: BorrowDevice },
   { path: '/history/borrow_device', name: 'transaction-list', component: HistoryBorrowDevice },
   { path: '/devices/register', name: 'device-register', component: DeviceRegister },
+  { path: '/transactions/return', name: 'transaction-return', component: ReturnDevice }
 ]
 
 const router = createRouter({
