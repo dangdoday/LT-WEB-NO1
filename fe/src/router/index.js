@@ -9,6 +9,7 @@ import ClassroomCreate from '../pages/ClassroomCreate.vue'
 import DeviceAdvancedSearch from '../pages/DeviceAdvancedSearch.vue'
 import Login from '../pages/Login.vue'
 import Register from '../pages/Register.vue'
+import DeviceSearch from '../pages/DeviceSearch.vue'
 import ReturnDevice from '../pages/ReturnDevice.vue'
 
 const routes = [
@@ -21,8 +22,9 @@ const routes = [
   { path: '/transactions/borrow', name: 'borrow-device', component: BorrowDevice },
   { path: '/history/borrow_device', name: 'transaction-list', component: HistoryBorrowDevice },
   { path: '/devices/register', name: 'device-register', component: DeviceRegister },
-  { path: '/transactions/return', name: 'transaction-return', component: ReturnDevice }
+  { path: '/transactions/return', name: 'transaction-return', component: ReturnDevice },
   { path: '/devices/advanced-search', name: 'device-advanced-search', component: DeviceAdvancedSearch },
+  { path: '/transactions/search', name: 'device-search', component: DeviceSearch },
 ]
 
 const router = createRouter({
@@ -30,14 +32,11 @@ const router = createRouter({
   routes,
 })
 
-
-// Navigation guard: chỉ cho phép vào các trang khi đã login
 router.beforeEach(async (to, from, next) => {
   if (to.name === 'login' || to.name === 'register') {
     next()
     return
   }
-  // Kiểm tra trạng thái đăng nhập qua API
   try {
     const res = await fetch('/api/home.php')
     if (res.ok) {
@@ -47,7 +46,7 @@ router.beforeEach(async (to, from, next) => {
         return
       }
     }
-  } catch (e) { }
+  } catch (e) {}
   next({ name: 'login' })
 })
 
