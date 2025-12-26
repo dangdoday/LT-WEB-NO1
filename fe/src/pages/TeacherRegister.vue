@@ -99,20 +99,21 @@ const onAvatarChange = (event) => {
   form.avatarFile = file
 }
 
+// Theo dõi thay đổi file để tạo URL preview
 watch(
-  () => form.avatarFile,
-  (file, previous) => {
-    if (avatarPreview.value) {
-      URL.revokeObjectURL(avatarPreview.value)
-      avatarPreview.value = ''
+    () => form.avatarFile,
+    (file, previous) => {
+      if (avatarPreview.value) {
+        URL.revokeObjectURL(avatarPreview.value)
+        avatarPreview.value = ''
+      }
+      if (file) {
+        avatarPreview.value = URL.createObjectURL(file)
+      }
+      if (!file && previous) {
+        form.avatarFile = null
+      }
     }
-    if (file) {
-      avatarPreview.value = URL.createObjectURL(file)
-    }
-    if (!file && previous) {
-      form.avatarFile = null
-    }
-  }
 )
 
 onBeforeUnmount(() => {
@@ -195,6 +196,7 @@ const submit = async () => {
         </div>
       </header>
 
+      <!-- STEP 1: INPUT -->
       <form v-if="step === 'input'" class="form" @submit.prevent="goConfirm">
         <div class="form-grid">
           <label for="name">Ho va Ten</label>
@@ -225,21 +227,29 @@ const submit = async () => {
             <p v-if="errors.degree" class="error">{{ errors.degree }}</p>
           </div>
 
+          <!-- PHẦN ĐÃ SỬA: AVATAR -->
           <label for="avatar">Avatar</label>
-          <div class="file-row">
-            <input id="avatar" type="file" accept="image/*" @change="onAvatarChange" />
-            <span class="file-hint">Browse</span>
+          <div>
+            <!-- Hiển thị ảnh xem trước nếu đã chọn -->
+            <div v-if="avatarPreview" class="avatar-box mb-3">
+              <img :src="avatarPreview" alt="Avatar preview" />
+            </div>
+
+            <div class="file-row">
+              <input id="avatar" type="file" accept="image/*" @change="onAvatarChange" />
+              <span class="file-hint">Browse</span>
+            </div>
             <p v-if="errors.avatarFile" class="error">{{ errors.avatarFile }}</p>
           </div>
 
           <label for="description">Mo ta them</label>
           <div>
             <textarea
-              id="description"
-              v-model="form.description"
-              maxlength="1000"
-              placeholder="Nhap mo ta chi tiet"
-              rows="6"
+                id="description"
+                v-model="form.description"
+                maxlength="1000"
+                placeholder="Nhap mo ta chi tiet"
+                rows="6"
             ></textarea>
             <p v-if="errors.description" class="error">{{ errors.description }}</p>
           </div>
@@ -251,6 +261,7 @@ const submit = async () => {
         </div>
       </form>
 
+      <!-- STEP 2: CONFIRM -->
       <div v-else-if="step === 'confirm'" class="confirm">
         <div class="form-grid">
           <span class="label">Ho va Ten</span>
@@ -283,6 +294,7 @@ const submit = async () => {
         </div>
       </div>
 
+      <!-- STEP 3: COMPLETE -->
       <div v-else class="complete">
         <div class="complete__box">
           <h2>Dang ky thanh cong</h2>
@@ -311,7 +323,7 @@ const submit = async () => {
   margin: 0;
   font-family: 'Space Grotesk', system-ui, sans-serif;
   background: radial-gradient(circle at top, #f4d9b5 0%, #f5f0e6 40%) no-repeat,
-    linear-gradient(135deg, #f5f0e6 0%, #dbe4f2 100%);
+  linear-gradient(135deg, #f5f0e6 0%, #dbe4f2 100%);
   color: var(--ink);
 }
 
@@ -377,7 +389,9 @@ label,
 .label {
   font-weight: 600;
   color: var(--muted);
-  align-self: center;
+  align-self: center; /* Giữ label căn giữa theo chiều dọc nếu input cao */
+  align-self: flex-start; /* Hoặc để lên trên cùng nếu thích */
+  padding-top: 10px; /* Chỉnh lại chút cho đẹp */
 }
 
 input,
@@ -463,6 +477,7 @@ button:disabled {
   align-self: center;
 }
 
+/* Avatar Box Style - Dùng chung cho cả Input và Confirm */
 .avatar-box {
   width: 140px;
   height: 140px;
@@ -484,6 +499,10 @@ button:disabled {
 .avatar-placeholder {
   font-weight: 700;
   color: var(--accent);
+}
+
+.mb-3 {
+  margin-bottom: 12px;
 }
 
 .description-box {
