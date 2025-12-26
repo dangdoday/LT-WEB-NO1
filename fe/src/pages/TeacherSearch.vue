@@ -159,7 +159,6 @@ const handleEdit = (teacher) => {
               <th>No</th>
               <th>Tên giáo viên</th>
               <th>Khoa</th>
-              <th>Học vị</th>
               <th>Mô tả chi tiết</th>
               <th>Action</th>
             </tr>
@@ -169,7 +168,6 @@ const handleEdit = (teacher) => {
               <td>{{ index + 1 }}</td>
               <td>{{ teacher.name }}</td>
               <td>{{ SPECIALIZATION_MAP[teacher.specialized] || teacher.specialized }}</td>
-              <td>{{ DEGREE_MAP[teacher.degree] || teacher.degree }}</td>
               <td>{{ teacher.description }}</td>
               <td class="actions">
                 <button @click="handleEdit(teacher)" class="btn-edit">Sửa</button>
@@ -290,11 +288,18 @@ h1 {
   margin-bottom: 24px;
 }
 
+
 .results-table th,
 .results-table td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid #e5e7eb;
+}
+
+/* Center the Action column header and cells */
+.results-table th:last-child,
+.results-table td.actions {
+  text-align: center;
 }
 
 .results-table th {
