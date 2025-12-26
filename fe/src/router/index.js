@@ -11,6 +11,8 @@ import Login from '../pages/Login.vue'
 import Register from '../pages/Register.vue'
 import DeviceSearch from '../pages/DeviceSearch.vue'
 import ReturnDevice from '../pages/ReturnDevice.vue'
+import RequestReset from '../pages/RequestReset.vue'
+import ResetPassword from '../pages/ResetPassword.vue'
 
 const routes = [
   { path: '/', name: 'home', component: Home },
@@ -25,6 +27,8 @@ const routes = [
   { path: '/transactions/return', name: 'transaction-return', component: ReturnDevice },
   { path: '/devices/advanced-search', name: 'device-advanced-search', component: DeviceAdvancedSearch },
   { path: '/transactions/search', name: 'device-search', component: DeviceSearch },
+  { path: '/reset-password-request', name: 'reset-password-request', component: RequestReset },
+  { path: '/reset-password', name: 'reset-password', component: ResetPassword },
 ]
 
 const router = createRouter({
@@ -33,7 +37,7 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  if (to.name === 'login' || to.name === 'register') {
+  if (['login', 'register', 'reset-password-request', 'reset-password'].includes(to.name)) {
     next()
     return
   }

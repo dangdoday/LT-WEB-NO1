@@ -9,5 +9,5 @@ require_once __DIR__ . '/app/common/define.php';
 // 2. Chỉ trả về Site Key cho Frontend
 echo json_encode([
     'status' => 'success',
-    'site_key' => $CONFIG['RECAPTCHA_SITE_KEY'] ?? ''
+ 'site_key' => $CONFIG['RECAPTCHA_SITE_KEY'] ?? ''
 ]);
