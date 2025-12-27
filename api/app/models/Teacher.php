@@ -1,6 +1,46 @@
 <?php
 class Teacher
 {
+    public static function updateWithAvatar($id, $data)
+    {
+        $pdo = get_db_connection();
+        // Nếu có avatar mới thì update, không thì giữ nguyên
+        if (isset($data['avatar']) && $data['avatar']) {
+            $stmt = $pdo->prepare(
+                'UPDATE teachers
+                 SET name = :name,
+                     specialized = :specialized,
+                     description = :description,
+                     degree = :degree,
+                     avatar = :avatar
+                 WHERE id = :id'
+            );
+            return $stmt->execute([
+                'id' => $id,
+                'name' => $data['name'] ?? '',
+                'specialized' => $data['specialized'] ?? '',
+                'description' => $data['description'] ?? '',
+                'degree' => $data['degree'] ?? '',
+                'avatar' => $data['avatar'],
+            ]);
+        } else {
+            $stmt = $pdo->prepare(
+                'UPDATE teachers
+                 SET name = :name,
+                     specialized = :specialized,
+                     description = :description,
+                     degree = :degree
+                 WHERE id = :id'
+            );
+            return $stmt->execute([
+                'id' => $id,
+                'name' => $data['name'] ?? '',
+                'specialized' => $data['specialized'] ?? '',
+                'description' => $data['description'] ?? '',
+                'degree' => $data['degree'] ?? '',
+            ]);
+        }
+    }
     public static function all()
     {
         $pdo = get_db_connection();
@@ -11,7 +51,7 @@ class Teacher
     {
         $pdo = get_db_connection();
         return $pdo->query(
-            'SELECT id, name, specialized, description, degree FROM teachers ORDER BY id DESC'
+            'SELECT id, name, specialized, description, degree, avatar FROM teachers ORDER BY id DESC'
         )->fetchAll();
     }
 
@@ -19,7 +59,7 @@ class Teacher
     {
         $pdo = get_db_connection();
         $stmt = $pdo->prepare(
-            'SELECT id, name, specialized, description, degree FROM teachers WHERE id = :id LIMIT 1'
+            'SELECT id, name, specialized, description, degree, avatar FROM teachers WHERE id = :id LIMIT 1'
         );
         $stmt->execute(['id' => $id]);
         return $stmt->fetch();
@@ -28,7 +68,7 @@ class Teacher
     public static function search($specialized = null, $keyword = null)
     {
         $pdo = get_db_connection();
-        $sql = "SELECT id, name, specialized, description, degree FROM teachers WHERE 1=1";
+        $sql = "SELECT id, name, specialized, description, degree, avatar FROM teachers WHERE 1=1";
         $params = [];
         if (!empty($specialized)) {
             $sql .= " AND specialized = :specialized";
