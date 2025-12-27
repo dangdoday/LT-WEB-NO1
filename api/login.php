@@ -1,16 +1,15 @@
-
 <?php
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 session_start();
 header('Content-Type: application/json; charset=utf-8');
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST');
 
 require_once __DIR__ . '/app/common/define.php';
 
 $pdo = null;
 try {
-    $pdo = new PDO("sqlite:" . DB_PATH);
+    $pdo = new PDO('sqlite:' . DB_PATH);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     echo json_encode(['status' => 'error', 'message' => 'Database connection failed']);
@@ -23,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $login_id = trim($_POST['login_id'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $recaptcha_response = $_POST['g-recaptcha-response'] ?? '';
+    //$recaptcha_secret = $CONFIG['RECAPTCHA_SECRET_KEY'] ?? '';
+    //$captcha_enabled = ($recaptcha_secret !== '');
 
     if ($login_id === '') {
         $errors['login_id'] = 'Hãy nhập login id';
