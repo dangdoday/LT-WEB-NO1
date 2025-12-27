@@ -263,6 +263,12 @@ button:disabled {
   font-weight: 600;
 }
 
+.mockup-table th:first-child,
+.mockup-table td:first-child {
+  text-align: center;
+  width: 60px;
+}
+
 .empty {
   text-align: center;
   color: #999;
