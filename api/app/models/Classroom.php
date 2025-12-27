@@ -29,8 +29,6 @@ class Classroom
         return $pdo->lastInsertId();
     }
 
-<<<<<<< HEAD
-=======
     public static function update($id, $data)
     {
         $pdo = get_db_connection();
@@ -53,8 +51,6 @@ class Classroom
         $stmt = $pdo->prepare($sql);
         return $stmt->execute($params);
     }
-
->>>>>>> 12c0183 (Update ClassroomEdit UI styling and translation)
     public static function search($building = '', $keyword = '')
     {
         $pdo = get_db_connection();
