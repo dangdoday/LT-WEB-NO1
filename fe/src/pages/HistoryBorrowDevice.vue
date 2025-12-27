@@ -73,7 +73,9 @@ onMounted(() => {
           <label>Giáo viên</label>
           <select v-model="filters.teacher_id">
             <option value="">Chọn giáo viên</option>
-            <option v-for="t in options.teachers" :key="t.id" :value="t.id">{{ t.name }}</option>
+            <option v-for="t in options.teachers" :key="t.id" :value="t.id">
+              {{ t.name }}
+            </option>
           </select>
         </div>
 
@@ -188,13 +190,15 @@ onMounted(() => {
   align-self: center;
 }
 
-input, select {
+input,
+select {
   width: 100%;
   border: 1px solid #cdd7e5;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 12px 16px; /* chỉnh để input bằng select */
   font-size: 15px;
   background: #fff;
+  box-sizing: border-box;
 }
 
 .actions {
@@ -257,6 +261,12 @@ button:disabled {
 .mockup-table th {
   background-color: #fff;
   font-weight: 600;
+}
+
+.mockup-table th:first-child,
+.mockup-table td:first-child {
+  text-align: center;
+  width: 60px;
 }
 
 .empty {
