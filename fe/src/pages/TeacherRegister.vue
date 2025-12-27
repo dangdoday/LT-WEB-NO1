@@ -1,8 +1,50 @@
 <script setup>
-import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+
+import { computed, onBeforeUnmount, reactive, ref, watch, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
+// Nếu có id trên URL, sẽ fetch thông tin giáo viên để fill vào form
+const teacherId = computed(() => route.query.id || null)
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+
+
+const fetchTeacherDetail = async (id) => {
+  try {
+    // Gọi API dạng ?id= để tương thích backend hiện tại
+    const res = await fetch(`${API_BASE}/teachers?id=${id}`)
+    if (!res.ok) return
+    const data = await res.json()
+    // Nếu trả về 1 mảng, tìm đúng id
+    const teacher = Array.isArray(data)
+      ? data.find(t => String(t.id) === String(id))
+      : data;
+    if (teacher && !teacher.error) {
+      form.name = teacher.name || ''
+      form.specialized = teacher.specialized || ''
+      form.degree = teacher.degree || ''
+      form.description = teacher.description || ''
+      // Avatar: chỉ preview nếu có link ảnh
+      if (teacher.avatar) {
+        avatarPreview.value = `${API_BASE}/web/image/avatar/${teacher.avatar}`;
+        // Đảm bảo không reset form.avatarFile nếu đang sửa (giữ null để input file không bị lỗi)
+        form.avatarFile = null;
+      } else {
+        avatarPreview.value = '';
+      }
+    }
+  } catch (e) {
+    // silent
+  }
+}
+
+onMounted(() => {
+  if (teacherId.value) {
+    fetchTeacherDetail(teacherId.value)
+  }
+})
 const step = ref('input')
 const submitting = ref(false)
 const serverError = ref('')
@@ -86,7 +128,8 @@ const validate = () => {
     ok = false
   }
 
-  if (!form.avatarFile) {
+  // Nếu là đăng ký mới thì bắt buộc chọn avatar, nếu sửa thì không cần
+  if (!form.avatarFile && !teacherId.value && !avatarPreview.value) {
     errors.avatarFile = 'Hay chon avatar.'
     ok = false
   }
@@ -143,18 +186,49 @@ const submit = async () => {
   serverError.value = ''
 
   try {
-    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
-    const formData = new FormData()
-    formData.append('name', form.name.trim())
-    formData.append('specialized', form.specialized)
-    formData.append('degree', form.degree)
-    formData.append('description', form.description.trim())
-    formData.append('avatar', form.avatarFile)
 
-    const response = await fetch(`${apiBase}/teacher_register.php`, {
-      method: 'POST',
-      body: formData,
-    })
+
+    let response;
+    if (teacherId.value) {
+      if (form.avatarFile) {
+        // Nếu có file mới, gửi FormData
+        const formData = new FormData();
+        formData.append('name', form.name.trim());
+        formData.append('specialized', form.specialized);
+        formData.append('degree', form.degree);
+        formData.append('description', form.description.trim());
+        formData.append('avatar', form.avatarFile);
+        response = await fetch(`${API_BASE}/teachers?id=${teacherId.value}`, {
+          method: 'PUT',
+          body: formData,
+        });
+      } else {
+        // Không có file mới, gửi JSON như cũ
+        const updateData = {
+          name: form.name.trim(),
+          specialized: form.specialized,
+          degree: form.degree,
+          description: form.description.trim(),
+        };
+        response = await fetch(`${API_BASE}/teachers?id=${teacherId.value}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updateData),
+        });
+      }
+    } else {
+      // Đăng ký mới
+      const formData = new FormData();
+      formData.append('name', form.name.trim());
+      formData.append('specialized', form.specialized);
+      formData.append('degree', form.degree);
+      formData.append('description', form.description.trim());
+      formData.append('avatar', form.avatarFile);
+      response = await fetch(`${API_BASE}/teacher_register.php`, {
+        method: 'POST',
+        body: formData,
+      });
+    }
 
     const payload = await response.json().catch(() => ({}))
     if (!response.ok) {
@@ -231,6 +305,7 @@ const submit = async () => {
           <label for="avatar">Avatar</label>
           <div>
             <!-- Hiển thị ảnh xem trước nếu đã chọn -->
+
             <div v-if="avatarPreview" class="avatar-box mb-3">
               <img :src="avatarPreview" alt="Avatar preview" />
             </div>

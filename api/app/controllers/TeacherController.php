@@ -116,8 +116,60 @@ class TeacherController
             jsonResponse(['error' => 'ID is required'], 400);
             return;
         }
-        $data = json_decode(file_get_contents('php://input'), true) ?: $_POST;
-        $result = Teacher::update($id, $data);
+
+        // Fetch existing teacher data
+        $existing = Teacher::findById($id);
+        if (!$existing) {
+            jsonResponse(['error' => 'Teacher not found'], 404);
+            return;
+        }
+
+
+        // Lấy dữ liệu từ multipart/form-data (FormData) hoặc JSON
+        $data = [];
+        if (isset($_FILES['avatar'])) {
+            // Handle file upload
+            $file = $_FILES['avatar'];
+            if ($file['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = __DIR__ . '/../../web/image/avatar/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                $filename = uniqid() . '_' . basename($file['name']);
+                $targetPath = $uploadDir . $filename;
+                if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+                    $data['avatar'] = $filename;
+                } else {
+                    jsonResponse(['error' => 'Failed to upload avatar'], 500);
+                    return;
+                }
+            }
+            // Khi dùng FormData, các trường text sẽ nằm trong $_POST (nếu enctype="multipart/form-data") hoặc $_REQUEST
+            // Để chắc chắn, merge $_REQUEST (chứa cả $_POST và $_GET, trừ file)
+            foreach(['name','specialized','degree','description'] as $field) {
+                if (isset($_REQUEST[$field])) {
+                    $data[$field] = $_REQUEST[$field];
+                }
+            }
+        } else if (!empty($_POST)) {
+            $data = array_merge($data, $_POST);
+        } else {
+            $jsonData = json_decode(file_get_contents('php://input'), true);
+            if ($jsonData) {
+                $data = array_merge($data, $jsonData);
+            }
+        }
+
+        // Merge từng trường, nếu không gửi lên hoặc gửi rỗng thì giữ nguyên giá trị cũ
+        $mergedData = [
+            'name' => (isset($data['name']) && trim($data['name']) !== '') ? $data['name'] : $existing['name'],
+            'specialized' => (isset($data['specialized']) && trim($data['specialized']) !== '') ? $data['specialized'] : $existing['specialized'],
+            'degree' => (isset($data['degree']) && trim($data['degree']) !== '') ? $data['degree'] : $existing['degree'],
+            'description' => (isset($data['description']) && trim($data['description']) !== '') ? $data['description'] : $existing['description'],
+            'avatar' => (isset($data['avatar']) && trim($data['avatar']) !== '') ? $data['avatar'] : $existing['avatar'],
+        ];
+
+        $result = Teacher::updateWithAvatar($id, $mergedData);
         jsonResponse(['success' => $result]);
     }
 }

@@ -106,9 +106,10 @@ const handleDelete = async (teacher) => {
   }
 }
 
+
 const handleEdit = (teacher) => {
-  // TODO: Implement edit page
-  alert('Chức năng sửa chưa được triển khai')
+  // Chuyển hướng sang trang sửa giáo viên, truyền id lên URL
+  router.push({ path: '/teachers/register', query: { id: teacher.id } })
 }
 
 
