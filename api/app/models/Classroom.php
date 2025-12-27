@@ -28,4 +28,35 @@ class Classroom
         ]);
         return $pdo->lastInsertId();
     }
+
+    public static function search($building = '', $keyword = '')
+    {
+        $pdo = get_db_connection();
+        
+        $sql = "SELECT * FROM classrooms WHERE 1=1";
+        $params = [];
+
+        if (!empty($building)) {
+            $sql .= " AND building = :building";
+            $params['building'] = $building;
+        }
+
+        if (!empty($keyword)) {
+            $sql .= " AND (name LIKE :keyword OR description LIKE :keyword)";
+            $params['keyword'] = "%$keyword%";
+        }
+
+        $sql .= " ORDER BY id DESC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    public static function delete($id)
+    {
+        $pdo = get_db_connection();
+        $stmt = $pdo->prepare("DELETE FROM classrooms WHERE id = :id");
+        return $stmt->execute(['id' => $id]);
+    }
 }

@@ -10,10 +10,34 @@ class ClassroomController
     {
         $this->service = new ClassroomService();
     }
+
     public function index()
     {
-        $items = Classroom::all();
+        $building = isset($_GET['building']) ? $_GET['building'] : '';
+        $keyword  = isset($_GET['keyword']) ? $_GET['keyword'] : '';
+
+        $items = Classroom::search($building, $keyword);
+        
         jsonResponse($items);
+    }
+
+    public function delete() 
+    {
+        // Lấy ID từ URL
+        $id = $_GET['id'] ?? null;
+
+        if (!$id) {
+            jsonResponse(['error' => 'Chưa cung cấp ID phòng học'], 400);
+            return;
+        }
+
+        $result = Classroom::delete($id);
+
+        if ($result) {
+            jsonResponse(['success' => true, 'message' => 'Đã xóa thành công']);
+        } else {
+            jsonResponse(['error' => 'Xóa thất bại'], 500);
+        }
     }
 
     public function create()
