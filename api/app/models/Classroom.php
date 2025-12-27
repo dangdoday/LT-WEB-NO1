@@ -11,7 +11,7 @@ class Classroom
     public static function findById($id)
     {
         $pdo = get_db_connection();
-        $stmt = $pdo->prepare('SELECT id, name FROM classrooms WHERE id = :id LIMIT 1');
+        $stmt = $pdo->prepare('SELECT * FROM classrooms WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
         return $stmt->fetch();
     }
@@ -29,6 +29,32 @@ class Classroom
         return $pdo->lastInsertId();
     }
 
+<<<<<<< HEAD
+=======
+    public static function update($id, $data)
+    {
+        $pdo = get_db_connection();
+        $sql = 'UPDATE classrooms SET name = :name, description = :description, building = :building, updated = CURRENT_TIMESTAMP';
+        
+        $params = [
+            'id' => $id,
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'building' => $data['building'],
+        ];
+
+        if (!empty($data['avatar'])) {
+            $sql .= ', avatar = :avatar';
+            $params['avatar'] = $data['avatar'];
+        }
+
+        $sql .= ' WHERE id = :id';
+        
+        $stmt = $pdo->prepare($sql);
+        return $stmt->execute($params);
+    }
+
+>>>>>>> 12c0183 (Update ClassroomEdit UI styling and translation)
     public static function search($building = '', $keyword = '')
     {
         $pdo = get_db_connection();

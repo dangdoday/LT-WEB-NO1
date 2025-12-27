@@ -49,7 +49,7 @@
             <button class="btn-delete" @click="deleteRoom(room.id, room.name)">
               Xóa
             </button>
-            <button class="btn-edit">Sửa</button>
+            <button class="btn-edit" @click="router.push(`/classrooms/edit/${room.id}`)">Sửa</button>
           </td>
         </tr>
         <tr v-if="classrooms.length === 0">
@@ -62,12 +62,14 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 
 // --- THAY ĐỔI QUAN TRỌNG: Import từ file chung ---
 // Đảm bảo bạn đã tạo file src/constants/options.js như hướng dẫn trước
 import { BUILDINGS } from "@/constants/options.js";
 
 // Khai báo biến
+const router = useRouter();
 const classrooms = ref([]);
 
 // Thay vì gọi API, ta gán luôn danh sách chung vào đây
@@ -82,7 +84,7 @@ const keyword = ref("");
 const fetchData = async () => {
   try {
     const response = await fetch(
-      `http://localhost:8000/classroom.php?building=${building.value}&keyword=${keyword.value}`
+      `/api/classroom.php?building=${building.value}&keyword=${keyword.value}`
     );
     const data = await response.json();
     classrooms.value = data;
@@ -100,7 +102,7 @@ const deleteRoom = async (id, name) => {
 
   try {
     const response = await fetch(
-      `http://localhost:8000/classroom.php?id=${id}`,
+      `/api/classroom.php?id=${id}`,
       {
         method: "DELETE",
       }
