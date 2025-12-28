@@ -1,2 +1,4 @@
 api/config_env.php
 *.sqlite
+api/storage/ltweb.sqlite
+api/web/image
