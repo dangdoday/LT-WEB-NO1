@@ -1,6 +1,6 @@
 <template>
   <div class="page-container">
-    <h1 class="page-title">Quản lý mượn thiết bị</h1>
+    <h1 class="page-title">Tìm kiếm thiết bị</h1>
 
     <div class="content-wrapper">
       <!-- 1.1 Form Search -->
