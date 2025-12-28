@@ -1,6 +1,6 @@
 <template>
   <div class="page-container">
-    <h1 class="page-title">Quản lý mượn thiết bị</h1>
+    <h1 class="page-title">Tìm kiếm thiết bị</h1>
 
     <div class="content-wrapper">
       <!-- 1.1 Form Search -->
@@ -10,11 +10,11 @@
           <div class="form-group">
             <label>Từ khóa</label>
             <input
-                type="text"
-                v-model="searchParams.keyword"
-                class="form-control"
-                placeholder="Nhập tên thiết bị..."
-            >
+              type="text"
+              v-model="searchParams.keyword"
+              class="form-control"
+              placeholder="Nhập tên thiết bị..."
+            />
           </div>
 
           <!-- Tình trạng -->
@@ -29,7 +29,9 @@
 
           <!-- Nút Tìm kiếm -->
           <div class="form-group button-group">
-            <button @click="handleSearch" class="btn btn-primary">Tìm kiếm</button>
+            <button @click="handleSearch" class="btn btn-primary">
+              Tìm kiếm
+            </button>
           </div>
         </div>
       </div>
@@ -42,36 +44,48 @@
 
         <table class="table">
           <thead>
-          <tr>
-            <th style="width: 50px; text-align: center;">No</th>
-            <th>Tên Thiết bị</th>
-            <th style="width: 150px; text-align: center;">Trạng thái</th>
-            <th style="width: 200px; text-align: center;">Action</th>
-          </tr>
+            <tr>
+              <th style="width: 50px; text-align: center">No</th>
+              <th>Tên Thiết bị</th>
+              <th style="width: 150px; text-align: center">Trạng thái</th>
+              <th style="width: 200px; text-align: center">Action</th>
+            </tr>
           </thead>
           <tbody>
-          <tr v-if="devices.length === 0">
-            <td colspan="4" class="text-center">Không tìm thấy dữ liệu</td>
-          </tr>
-          <tr v-for="(device, index) in devices" :key="device.id">
-            <td class="text-center">{{ index + 1 }}</td>
-            <td>{{ device.name }}</td>
+            <tr v-if="devices.length === 0">
+              <td colspan="4" class="text-center">Không tìm thấy dữ liệu</td>
+            </tr>
+            <tr v-for="(device, index) in devices" :key="device.id">
+              <td class="text-center">{{ index + 1 }}</td>
+              <td>{{ device.name }}</td>
 
-            <!-- Trạng thái -->
-            <td class="text-center">
-              <span v-if="device.is_borrowed == 0" class="badge badge-success">Đang rảnh</span>
-              <span v-else class="badge badge-warning">Đang mượn</span>
-            </td>
+              <!-- Trạng thái -->
+              <td class="text-center">
+                <span v-if="device.is_borrowed == 0" class="badge badge-success"
+                  >Đang rảnh</span
+                >
+                <span v-else class="badge badge-warning">Đang mượn</span>
+              </td>
 
-            <!-- Action -->
-            <td class="text-center action-buttons">
-              <!-- Chỉ hiện khi Đang rảnh -->
-              <template v-if="device.is_borrowed == 0">
-                <button @click="handleEdit(device.id)" class="btn btn-sm btn-edit">Sửa</button>
-                <button @click="handleDelete(device)" class="btn btn-sm btn-delete">Xóa</button>
-              </template>
-            </td>
-          </tr>
+              <!-- Action -->
+              <td class="text-center action-buttons">
+                <!-- Chỉ hiện khi Đang rảnh -->
+                <template v-if="device.is_borrowed == 0">
+                  <button
+                    @click="handleEdit(device.id)"
+                    class="btn btn-sm btn-edit"
+                  >
+                    Sửa
+                  </button>
+                  <button
+                    @click="handleDelete(device)"
+                    class="btn btn-sm btn-delete"
+                  >
+                    Xóa
+                  </button>
+                </template>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -80,14 +94,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 
 const router = useRouter();
 const devices = ref([]);
 const searchParams = ref({
-  keyword: '',
-  status: '' // Mặc định là rỗng (Tất cả)
+  keyword: "",
+  status: "", // Mặc định là rỗng (Tất cả)
 });
 
 // Hàm gọi API
@@ -98,10 +112,10 @@ const fetchDevices = async () => {
     const res = await fetch(`/api/device_search.php?${params}`);
     const data = await res.json();
 
-    if (data.status === 'success') {
+    if (data.status === "success") {
       devices.value = data.data;
     } else {
-      alert(data.message || 'Lỗi lấy dữ liệu');
+      alert(data.message || "Lỗi lấy dữ liệu");
     }
   } catch (error) {
     console.error(error);
@@ -120,21 +134,21 @@ const handleDelete = async (device) => {
   if (!confirm(confirmMsg)) return;
 
   try {
-    const res = await fetch('/api/device_delete.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: device.id })
+    const res = await fetch("/api/device_delete.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: device.id }),
     });
     const data = await res.json();
 
-    if (data.status === 'success') {
-      alert('Xóa thành công!');
+    if (data.status === "success") {
+      alert("Xóa thành công!");
       fetchDevices(); // Refresh màn hình
     } else {
       alert(data.message);
     }
   } catch (error) {
-    alert('Lỗi kết nối server');
+    alert("Lỗi kết nối server");
   }
 };
 
@@ -142,7 +156,7 @@ const handleDelete = async (device) => {
 const handleEdit = (id) => {
   // Chuyển hướng sang trang sửa (Giả sử bạn dùng lại trang register hoặc trang edit riêng)
   // Logic: Chuyển sang màn hình edit, truyền ID lên URL
-  router.push({ name: 'device-register', query: { id: id } });
+  router.push({ name: "device-register", query: { id: id } });
 };
 
 // 0) Initial display
@@ -177,7 +191,7 @@ onMounted(() => {
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .form-group-row {
@@ -221,7 +235,9 @@ label {
 .btn-primary {
   background-color: #3578e5;
 }
-.btn-primary:hover { background-color: #2a65c7; }
+.btn-primary:hover {
+  background-color: #2a65c7;
+}
 
 .result-header {
   margin-bottom: 10px;
@@ -234,7 +250,8 @@ label {
   font-size: 14px;
 }
 
-.table th, .table td {
+.table th,
+.table td {
   border: 1px solid #dee2e6;
   padding: 10px;
   vertical-align: middle;
@@ -245,7 +262,9 @@ label {
   font-weight: bold;
 }
 
-.text-center { text-align: center; }
+.text-center {
+  text-align: center;
+}
 
 /* Trạng thái */
 .badge {
@@ -254,8 +273,13 @@ label {
   font-size: 12px;
   color: white;
 }
-.badge-success { background-color: #28a745; } /* Màu xanh lá */
-.badge-warning { background-color: #ffc107; color: black; } /* Màu vàng */
+.badge-success {
+  background-color: #28a745;
+} /* Màu xanh lá */
+.badge-warning {
+  background-color: #ffc107;
+  color: black;
+} /* Màu vàng */
 
 /* Buttons nhỏ */
 .btn-sm {
@@ -263,7 +287,10 @@ label {
   font-size: 12px;
   margin: 0 2px;
 }
-.btn-edit { background-color: #17a2b8; } /* Màu xanh dương nhạt */
-.btn-delete { background-color: #dc3545; } /* Màu đỏ */
-
+.btn-edit {
+  background-color: #17a2b8;
+} /* Màu xanh dương nhạt */
+.btn-delete {
+  background-color: #dc3545;
+} /* Màu đỏ */
 </style>
