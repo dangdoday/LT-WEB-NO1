@@ -140,9 +140,7 @@ const handleDelete = async (device) => {
 
 // 2.2 Action Sửa
 const handleEdit = (id) => {
-  // Chuyển hướng sang trang sửa (Giả sử bạn dùng lại trang register hoặc trang edit riêng)
-  // Logic: Chuyển sang màn hình edit, truyền ID lên URL
-  router.push({ name: 'device-register', query: { id: id } });
+  router.push({ name: 'device-update', query: { id } });
 };
 
 // 0) Initial display

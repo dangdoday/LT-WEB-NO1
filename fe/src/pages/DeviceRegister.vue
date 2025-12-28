@@ -1,59 +1,23 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const route = useRoute() // Dùng để lấy ID từ URL
-
 const step = ref('input')
 const submitting = ref(false)
 const serverError = ref('')
 const avatarPreview = ref('')
 
-// Kiểm tra xem có đang ở chế độ Sửa không (có ID trên URL)
-const isEditMode = computed(() => !!route.query.id)
-
 const form = reactive({
-  id: '',
   name: '',
   description: '',
   avatarFile: null,
-  currentAvatar: '' // Lưu tên ảnh cũ để hiển thị lại nếu hủy chọn
 })
 
 const errors = reactive({
   name: '',
   description: '',
   avatarFile: '',
-})
-
-// --- LOGIC MỚI: Load dữ liệu cũ khi vào trang Sửa ---
-onMounted(async () => {
-  if (isEditMode.value) {
-    try {
-      // Gọi API lấy thông tin thiết bị (File này bạn đã tạo ở bước trước)
-      const res = await fetch(`/api/get_device.php?id=${route.query.id}`)
-      const data = await res.json()
-
-      if (data.status === 'success') {
-        const d = data.data
-        form.id = d.id
-        form.name = d.name
-        form.description = d.description
-        form.currentAvatar = d.avatar // Tên file ảnh trong DB
-
-        // Hiển thị ảnh cũ (API get_device.php cần trả về image_url hoặc bạn tự nối chuỗi)
-        // Giả sử đường dẫn ảnh là /api/web/avatar/
-        avatarPreview.value = d.image_url || (d.avatar ? `/api/web/avatar/${d.avatar}` : '')
-      } else {
-        alert('Không tìm thấy thiết bị')
-        router.push('/devices/search')
-      }
-    } catch (e) {
-      console.error(e)
-      serverError.value = 'Lỗi tải dữ liệu thiết bị.'
-    }
-  }
 })
 
 const resetErrors = () => {
@@ -69,23 +33,20 @@ const validate = () => {
   const description = form.description.trim()
 
   if (!name) {
-    errors.name = 'Hay nhap ten thiet bi.'
+    errors.name = 'Hãy nhập tên thiết bị.'
     ok = false
   }
 
   if (!description) {
-    errors.description = 'Hay nhap mo ta chi tiet.'
+    errors.description = 'Hãy nhập mô tả chi tiết.'
     ok = false
   } else if (description.length > 1000) {
-    errors.description = 'Khong nhap qua 1000 ky tu'
+    errors.description = 'Không nhập quá 1000 ký tự'
     ok = false
   }
 
-  // Logic validate ảnh:
-  // - Nếu là Thêm mới: Bắt buộc chọn.
-  // - Nếu là Sửa: Không bắt buộc (giữ ảnh cũ).
-  if (!isEditMode.value && !form.avatarFile) {
-    errors.avatarFile = 'Hay chon avatar'
+  if (!form.avatarFile) {
+    errors.avatarFile = 'Hãy chọn avatar'
     ok = false
   }
 
@@ -98,28 +59,23 @@ const onAvatarChange = (event) => {
 }
 
 watch(
-    () => form.avatarFile,
-    (file) => {
-      // 1. Nếu chọn file mới -> Hiển thị file đó
-      if (file) {
-        if (avatarPreview.value && avatarPreview.value.startsWith('blob:')) {
-          URL.revokeObjectURL(avatarPreview.value)
-        }
-        avatarPreview.value = URL.createObjectURL(file)
-      }
-      // 2. Nếu hủy chọn file (file = null) VÀ đang sửa -> Hiện lại ảnh cũ
-      else if (!file && isEditMode.value && form.currentAvatar) {
-        avatarPreview.value = `/api/web/avatar/${form.currentAvatar}`
-      }
-      // 3. Xóa trắng
-      else {
-        avatarPreview.value = ''
-      }
+  () => form.avatarFile,
+  (file, previous) => {
+    if (avatarPreview.value) {
+      URL.revokeObjectURL(avatarPreview.value)
+      avatarPreview.value = ''
     }
+    if (file) {
+      avatarPreview.value = URL.createObjectURL(file)
+    }
+    if (!file && previous) {
+      form.avatarFile = null
+    }
+  }
 )
 
 onBeforeUnmount(() => {
-  if (avatarPreview.value && avatarPreview.value.startsWith('blob:')) {
+  if (avatarPreview.value) {
     URL.revokeObjectURL(avatarPreview.value)
   }
 })
@@ -147,19 +103,9 @@ const submit = async () => {
   try {
     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
     const formData = new FormData()
-
-    // Gửi ID nếu là Update
-    if (isEditMode.value) {
-      formData.append('id', form.id)
-    }
-
     formData.append('name', form.name.trim())
     formData.append('description', form.description.trim())
-
-    // Chỉ gửi file nếu có chọn
-    if (form.avatarFile) {
-      formData.append('avatar', form.avatarFile)
-    }
+    formData.append('avatar', form.avatarFile)
 
     const response = await fetch(`${apiBase}/device_register.php`, {
       method: 'POST',
@@ -167,8 +113,7 @@ const submit = async () => {
     })
 
     const payload = await response.json().catch(() => ({}))
-
-    if (!response.ok || payload.error) {
+    if (!response.ok) {
       if (payload.fields) {
         Object.keys(payload.fields).forEach((key) => {
           if (errors[key] !== undefined) {
@@ -176,7 +121,7 @@ const submit = async () => {
           }
         })
       }
-      serverError.value = payload.error || (isEditMode.value ? 'Cap nhat that bai.' : 'Dang ky that bai.')
+      serverError.value = payload.error || 'Đăng ký thất bại.'
       submitting.value = false
       step.value = 'input'
       return
@@ -184,7 +129,7 @@ const submit = async () => {
 
     step.value = 'complete'
   } catch (error) {
-    serverError.value = 'Khong the ket noi toi may chu.'
+    serverError.value = 'Không thể kết nối tới máy chủ.'
     step.value = 'input'
   } finally {
     submitting.value = false
@@ -197,71 +142,60 @@ const submit = async () => {
     <div class="card">
       <header class="card__header">
         <div>
-          <p class="eyebrow">{{ isEditMode ? 'Update Device' : 'Device registration' }}</p>
-          <h1>{{ isEditMode ? 'Cap nhat thiet bi' : 'Dang ky thiet bi' }}</h1>
+          <p class="eyebrow">THIẾT BỊ</p>
+          <h1>Đăng ký thiết bị</h1>
         </div>
         <div class="step-pill">
-          <span v-if="step === 'input'">Input</span>
-          <span v-else-if="step === 'confirm'">Confirm</span>
-          <span v-else>Complete</span>
+          <span v-if="step === 'input'">NHẬP LIỆU</span>
+          <span v-else-if="step === 'confirm'">XÁC NHẬN</span>
+          <span v-else>HOÀN TẤT</span>
         </div>
       </header>
 
-      <!-- STEP 1: INPUT -->
-      <form v-if="step === 'input'" class="form" @submit.prevent="goConfirm">
+      <form v-show="step === 'input'" class="form" @submit.prevent="goConfirm">
         <div class="form-grid">
-          <label for="name">Ten thiet bi</label>
+          <label for="name">Tên thiết bị</label>
           <div>
-            <input id="name" v-model="form.name" type="text" maxlength="255" placeholder="Nhap ten thiet bi" />
+            <input id="name" v-model="form.name" type="text" maxlength="255" placeholder="Nhập tên thiết bị" />
             <p v-if="errors.name" class="error">{{ errors.name }}</p>
           </div>
 
-          <label for="description">Mo ta them</label>
+          <label for="description">Mô tả thêm</label>
           <div>
             <textarea
-                id="description"
-                v-model="form.description"
-                maxlength="1000"
-                placeholder="Nhap mo ta chi tiet"
-                rows="6"
+              id="description"
+              v-model="form.description"
+              maxlength="1000"
+              placeholder="Nhập mô tả chi tiết"
+              rows="6"
             ></textarea>
             <p v-if="errors.description" class="error">{{ errors.description }}</p>
           </div>
 
           <label for="avatar">Avatar</label>
-          <div>
-            <!-- Preview ảnh ở bước nhập liệu -->
-            <div v-if="avatarPreview" class="avatar-box mb-3">
+          <div class="avatar-inline">
+            <div v-if="avatarPreview" class="avatar-box avatar-preview">
               <img :src="avatarPreview" alt="Avatar preview" />
             </div>
-
-            <div class="file-row">
-              <!-- Input file ẩn đi -->
+            <div class="file-row compact">
               <input id="avatar" type="file" accept="image/*" @change="onAvatarChange" />
-              <!-- Label đóng vai trò nút bấm -->
-              <label for="avatar" class="file-hint">Browse</label>
+              <p v-if="errors.avatarFile" class="error">{{ errors.avatarFile }}</p>
             </div>
-
-            <p v-if="isEditMode" style="font-size:12px; color:#666; margin-top:5px;">
-              (Bo trong neu khong muon doi anh)
-            </p>
-            <p v-if="errors.avatarFile" class="error">{{ errors.avatarFile }}</p>
           </div>
         </div>
 
         <div class="actions">
-          <button type="submit" class="primary">Xac nhan</button>
+          <button type="submit" class="primary">Xác nhận</button>
           <p v-if="serverError" class="error">{{ serverError }}</p>
         </div>
       </form>
 
-      <!-- STEP 2: CONFIRM -->
-      <div v-else-if="step === 'confirm'" class="confirm">
+      <div v-show="step === 'confirm'" class="confirm">
         <div class="form-grid">
-          <span class="label">Ten thiet bi</span>
+          <span class="label">Tên thiết bị</span>
           <span class="value">{{ form.name }}</span>
 
-          <span class="label">Mo ta chi tiet</span>
+          <span class="label">Mô tả chi tiết</span>
           <div class="value description-box">
             {{ form.description }}
           </div>
@@ -274,21 +208,19 @@ const submit = async () => {
         </div>
 
         <div class="actions">
-          <button type="button" class="ghost" @click="goEdit">Sua lai</button>
+          <button type="button" class="ghost" @click="goEdit">Sửa lại</button>
           <button type="button" class="primary" :disabled="submitting" @click="submit">
-            {{ submitting ? 'Dang xu ly...' : (isEditMode ? 'Cap nhat' : 'Dang ky') }}
+            {{ submitting ? 'Đăng ký...' : 'Đăng ký' }}
           </button>
           <p v-if="serverError" class="error">{{ serverError }}</p>
         </div>
       </div>
 
-      <!-- STEP 3: COMPLETE -->
-      <div v-else class="complete">
+      <div v-show="step === 'complete'" class="complete">
         <div class="complete__box">
-          <h2>{{ isEditMode ? 'Cap nhat thanh cong' : 'Dang ky thanh cong' }}</h2>
-          <p>{{ isEditMode ? 'Thong tin thiet bi da duoc cap nhat.' : 'Ban da dang ky thiet bi thanh cong.' }}</p>
-          <button type="button" class="primary" @click="goHome">Tro ve trang chu</button>
-          <button type="button" class="ghost" @click="router.push('/transactions/search')">Danh sach thiet bi</button>
+          <h2>Đăng ký thiết bị thành công</h2>
+          <p>Bạn đã đăng ký thiết bị thành công.</p>
+          <button type="button" class="primary" @click="goHome">Trở về trang chủ</button>
         </div>
       </div>
     </div>
@@ -312,7 +244,7 @@ const submit = async () => {
   margin: 0;
   font-family: 'Space Grotesk', system-ui, sans-serif;
   background: radial-gradient(circle at top, #e1efff 0%, #f5f0e6 40%) no-repeat,
-  linear-gradient(135deg, #f5f0e6 0%, #dbe4f2 100%);
+    linear-gradient(135deg, #f5f0e6 0%, #dbe4f2 100%);
   color: var(--ink);
 }
 
@@ -371,15 +303,15 @@ const submit = async () => {
 .form-grid {
   display: grid;
   grid-template-columns: 160px 1fr;
-  gap: 16px 20px;
+  gap: 16px 22px;
+  max-width: 850px;
 }
 
 label,
 .label {
   font-weight: 600;
   color: var(--muted);
-  align-self: flex-start; /* Căn label lên trên */
-  padding-top: 10px;
+  align-self: center;
 }
 
 input,
@@ -399,28 +331,29 @@ textarea {
   min-height: 140px;
 }
 
-/* SỬA LỖI NÚT BROWSE Ở ĐÂY */
-.file-row {
+.avatar-inline {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  max-width: 850px;
 }
 
-input[type='file'] {
-  display: none; /* Ẩn input file mặc định */
+.avatar-preview {
+  margin-bottom: 4px;
 }
 
-/* Biến thẻ label thành nút bấm */
-.file-hint {
+.file-row {
+  width: 100%;
+}
+
+.file-row input[type='file'] {
+  width: 100%;
+  height: 29px;
   padding: 10px 14px;
-  border-radius: 10px;
-  background: var(--accent);
-  color: white;
-  font-size: 14px;
-  text-align: center;
-  cursor: pointer;
-  display: inline-block;
 }
+
 
 .actions {
   margin-top: 28px;
@@ -467,7 +400,6 @@ button:disabled {
   align-self: center;
 }
 
-/* Avatar Box */
 .avatar-box {
   width: 140px;
   height: 140px;
@@ -490,8 +422,6 @@ button:disabled {
   font-weight: 700;
   color: var(--accent);
 }
-
-.mb-3 { margin-bottom: 12px; }
 
 .description-box {
   border: 1px solid var(--line);
@@ -530,6 +460,7 @@ button:disabled {
 @media (max-width: 720px) {
   .form-grid {
     grid-template-columns: 1fr;
+    max-width: 100%;
   }
 
   .card {
