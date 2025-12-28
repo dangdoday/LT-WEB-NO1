@@ -14,6 +14,7 @@ import DeviceSearch from '../pages/DeviceSearch.vue'
 import ReturnDevice from '../pages/ReturnDevice.vue'
 import RequestReset from '../pages/RequestReset.vue'
 import ResetPassword from '../pages/ResetPassword.vue'
+import DeviceEdit from '../pages/DeviceEdit.vue'
 
 const routes = [
   { path: '/', name: 'home', component: Home },
@@ -26,6 +27,7 @@ const routes = [
   { path: '/transactions/borrow', name: 'borrow-device', component: BorrowDevice },
   { path: '/history/borrow_device', name: 'transaction-list', component: HistoryBorrowDevice },
   { path: '/devices/register', name: 'device-register', component: DeviceRegister },
+  { path: '/devices/edit', name: 'device-edit', component: DeviceEdit },
   { path: '/transactions/return', name: 'transaction-return', component: ReturnDevice },
   { path: '/devices/advanced-search', name: 'device-advanced-search', component: DeviceAdvancedSearch },
   { path: '/transactions/search', name: 'device-search', component: DeviceSearch },

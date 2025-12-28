@@ -7,6 +7,7 @@ return [
         '/classrooms' => ['/app/controllers/ClassroomController.php', 'ClassroomController', 'index'],
         '/devices' => ['/app/controllers/DeviceController.php', 'DeviceController', 'index'],
         '/devices/advanced-search' => ['/app/controllers/DeviceController.php', 'DeviceController', 'advancedSearch'],
+        '/devices/detail' => ['/app/controllers/DeviceController.php', 'DeviceController', 'show'],
         '/home' => ['/home.php', null, null],
         '/get_config' => ['/get_config.php', null, null],
         '/teachers' => ['/app/controllers/TeacherController.php', 'TeacherController', 'index'],
@@ -19,6 +20,7 @@ return [
         '/classrooms' => ['/app/controllers/ClassroomController.php', 'ClassroomController', 'create'],
         '/login' => ['/login.php', null, null],
         '/register' => ['/register.php', null, null],
+        '/devices/update' => ['/app/controllers/DeviceController.php', 'DeviceController', 'update'],
     ],
     'PUT' => [
         '/teachers' => ['/app/controllers/TeacherController.php', 'TeacherController', 'update'],

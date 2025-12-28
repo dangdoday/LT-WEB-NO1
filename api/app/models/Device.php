@@ -4,15 +4,23 @@ class Device
     public static function all()
     {
         $pdo = get_db_connection();
-        $stmt = $pdo->query('SELECT id, name, serial FROM devices LIMIT 100');
+        $stmt = $pdo->query('SELECT id, name, serial, description, avatar FROM devices LIMIT 100');
         return $stmt->fetchAll();
     }
 
     public static function findById($id)
     {
         $pdo = get_db_connection();
-        $stmt = $pdo->prepare('SELECT id, name, serial FROM devices WHERE id = :id LIMIT 1');
+        $stmt = $pdo->prepare('SELECT id, name, serial, description, avatar FROM devices WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
+        return $stmt->fetch();
+    }
+
+    public static function findByName($name)
+    {
+        $pdo = get_db_connection();
+        $stmt = $pdo->prepare('SELECT id, name, serial, description, avatar FROM devices WHERE name = :name LIMIT 1');
+        $stmt->execute(['name' => $name]);
         return $stmt->fetch();
     }
 
@@ -46,5 +54,20 @@ class Device
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function updateItem($id, $name, $description, $avatar = null)
+    {
+        $pdo = get_db_connection();
+        $fields = ['name' => $name, 'description' => $description, 'id' => $id];
+        $sql = 'UPDATE devices SET name = :name, description = :description';
+        if ($avatar !== null) {
+            $sql .= ', avatar = :avatar';
+            $fields['avatar'] = $avatar;
+        }
+        $sql .= ' WHERE id = :id';
+
+        $stmt = $pdo->prepare($sql);
+        return $stmt->execute($fields);
     }
 }
