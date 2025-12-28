@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start:api": "php -S 0.0.0.0:8000 -t api api/index.php",
+    "start:api": "php -S 0.0.0.0:8000 -t api",
     "start:fe": "pnpm --prefix fe run dev",
     "start": "sh -c \"pnpm run start:api & pnpm run start:fe\""
   }

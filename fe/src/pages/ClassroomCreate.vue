@@ -173,7 +173,7 @@ const submit = async () => {
               v-model="form.name"
               type="text"
               maxlength="255"
-              placeholder="Nhap ten lop"
+              placeholder="Enter classroom name"
             />
             <p v-if="errors.name" class="error">{{ errors.name }}</p>
           </div>
@@ -217,7 +217,7 @@ const submit = async () => {
               id="description"
               v-model="form.description"
               rows="6"
-              placeholder="Nhap mo ta"
+              placeholder="Enter description"
             ></textarea>
             <p v-if="errors.description" class="error">
               {{ errors.description }}
@@ -281,13 +281,20 @@ const submit = async () => {
 </template>
 
 <style scoped>
-:root {
+:root{
   --paper: #f5f0e6;
   --ink: #1d2330;
   --accent: #2e6db4;
   --line: #cdd7e5;
   --muted: #5b6475;
-  --shadow: 0 24px 60px rgba(30, 35, 55, 0.12);
+  --shadow: 0 24px 60px rgba(30,35,55,0.12);
+}
+
+/* global box-sizing so width calculations are predictable */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 .page {
@@ -299,15 +306,18 @@ const submit = async () => {
   background: transparent;
 }
 
+/* card keeps horizontal breathing room on small screens */
 .card {
-  width: min(880px, 100%);
+  width: min(880px, calc(100% - 40px)); /* ensure 20px margin each side on small screens */
   background: #fffdf8;
   border: 1px solid var(--line);
   border-radius: 24px;
   padding: 28px 32px 36px;
   box-shadow: var(--shadow);
+  margin: 0 20px;
 }
 
+/* header */
 .card__header {
   display: flex;
   align-items: center;
@@ -315,13 +325,11 @@ const submit = async () => {
   gap: 16px;
   margin-bottom: 24px;
 }
-
 .card__header h1 {
   margin: 8px 0 0;
   font-size: 28px;
   letter-spacing: -0.02em;
 }
-
 .eyebrow {
   text-transform: uppercase;
   font-weight: 600;
@@ -330,7 +338,6 @@ const submit = async () => {
   color: var(--muted);
   margin: 0;
 }
-
 .step-pill {
   padding: 8px 16px;
   border-radius: 999px;
@@ -341,19 +348,27 @@ const submit = async () => {
   font-size: 12px;
 }
 
+/* GRID: label column + input column */
 .form-grid {
   display: grid;
-  grid-template-columns: 160px 1fr;
+  grid-template-columns: 180px 1fr; /* wider label column for right alignment */
   gap: 16px 20px;
+  align-items: start; /* align by the top of each row */
 }
 
+/* right-align labels so inputs align to same left edge */
 label,
 .label {
   font-weight: 600;
   color: var(--muted);
-  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: right;
+  padding-right: 12px;
 }
 
+/* inputs live inside second column; ensure full width and consistent sizing */
 input,
 select,
 textarea {
@@ -365,23 +380,50 @@ textarea {
   font-size: 15px;
   font-family: inherit;
   color: var(--ink);
+  display: block;
 }
 
+/* confirm page uses labels on left, values on right — keep them left aligned */
+.confirm .label { text-align: left; justify-content: flex-start; }
+
+/* textarea tweak */
 textarea {
   resize: vertical;
   min-height: 140px;
 }
 
+/* file row */
 .file-row {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-height: 44px;
 }
-.file-hint {
-  font-size: 13px;
-  color: var(--muted);
+.file-hint { font-size: 13px; color: var(--muted); }
+
+/* hide native file input (we trigger it programmatically) */
+input[type="file"] {
+  display: none;
 }
 
+/* file button and name */
+.ghost.file-button {
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.file-name {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 40ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* avatar preview */
 .avatar-box {
   width: 120px;
   height: 80px;
@@ -403,19 +445,17 @@ textarea {
   font-weight: 600;
 }
 
-.value {
-  align-self: center;
-}
-.description-box {
-  white-space: pre-wrap;
-}
+/* values area */
+.value { align-self: center; }
+.description-box { white-space: pre-wrap; }
 
+/* actions centered, buttons grouped nicely */
 .actions {
   margin-top: 18px;
   display: flex;
   gap: 12px;
   align-items: center;
-  justify-content: center; /* center buttons horizontally */
+  justify-content: center; /* center horizontally */
   flex-wrap: wrap;
 }
 .primary {
@@ -433,34 +473,24 @@ textarea {
   border-radius: 10px;
   cursor: pointer;
 }
-.primary:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
+.primary:disabled { opacity: 0.6; cursor: default; }
 
+/* error styling */
 .error {
   color: #c44;
   margin-top: 6px;
   font-size: 13px;
 }
+/* make errors inside actions span full width and center */
+.actions .error { width: 100%; text-align: center; margin-top: 8px; }
 
-/* When errors are inside the actions row, make them span full width and center */
-.actions .error {
-  width: 100%;
-  text-align: center;
-  margin-top: 8px;
-}
+.complete__box { text-align: center; }
 
-.complete__box {
-  text-align: center;
-}
-
+/* smaller screens: stack labels above controls but keep horizontal padding */
 @media (max-width: 640px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-  .card {
-    padding: 20px;
-  }
+  .form-grid { grid-template-columns: 1fr; }
+  label, .label { justify-content: flex-start; text-align: left; padding-right: 0; margin-bottom: 6px; }
+  .card { padding: 20px; }
+  .file-name { max-width: 60%; }
 }
 </style>
