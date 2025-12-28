@@ -78,7 +78,20 @@ class Classroom
     public static function delete($id)
     {
         $pdo = get_db_connection();
-        $stmt = $pdo->prepare("DELETE FROM classrooms WHERE id = :id");
-        return $stmt->execute(['id' => $id]);
+        $pdo->beginTransaction();
+        try {
+            // Set classroom_id to NULL for related transactions
+            $stmt = $pdo->prepare("UPDATE transactions SET classroom_id = NULL WHERE classroom_id = :id");
+            $stmt->execute(['id' => $id]);
+
+            $stmt = $pdo->prepare("DELETE FROM classrooms WHERE id = :id");
+            $result = $stmt->execute(['id' => $id]);
+            
+            $pdo->commit();
+            return $result;
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
     }
 }
