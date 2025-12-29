@@ -11,5 +11,20 @@ export function useClassroom() {
     return { ok: res.ok, status: res.status, payload }
   }
 
-  return { createClassroom }
+  async function getClassroom(id) {
+    const res = await fetch(`${apiBase}/classrooms/show?id=${id}`)
+    const payload = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, payload }
+  }
+
+  async function updateClassroom(id, formData) {
+    const res = await fetch(`${apiBase}/classrooms/update?id=${id}`, {
+      method: 'POST',
+      body: formData,
+    })
+    const payload = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, payload }
+  }
+
+  return { createClassroom, getClassroom, updateClassroom }
 }

@@ -11,7 +11,7 @@ class Classroom
     public static function findById($id)
     {
         $pdo = get_db_connection();
-        $stmt = $pdo->prepare('SELECT id, name FROM classrooms WHERE id = :id LIMIT 1');
+        $stmt = $pdo->prepare('SELECT * FROM classrooms WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
         return $stmt->fetch();
     }
@@ -29,6 +29,28 @@ class Classroom
         return $pdo->lastInsertId();
     }
 
+    public static function update($id, $data)
+    {
+        $pdo = get_db_connection();
+        $sql = 'UPDATE classrooms SET name = :name, description = :description, building = :building, updated = CURRENT_TIMESTAMP';
+        
+        $params = [
+            'id' => $id,
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'building' => $data['building'],
+        ];
+
+        if (!empty($data['avatar'])) {
+            $sql .= ', avatar = :avatar';
+            $params['avatar'] = $data['avatar'];
+        }
+
+        $sql .= ' WHERE id = :id';
+        
+        $stmt = $pdo->prepare($sql);
+        return $stmt->execute($params);
+    }
     public static function search($building = '', $keyword = '')
     {
         $pdo = get_db_connection();
@@ -56,7 +78,20 @@ class Classroom
     public static function delete($id)
     {
         $pdo = get_db_connection();
-        $stmt = $pdo->prepare("DELETE FROM classrooms WHERE id = :id");
-        return $stmt->execute(['id' => $id]);
+        $pdo->beginTransaction();
+        try {
+            // Set classroom_id to NULL for related transactions
+            $stmt = $pdo->prepare("UPDATE transactions SET classroom_id = NULL WHERE classroom_id = :id");
+            $stmt->execute(['id' => $id]);
+
+            $stmt = $pdo->prepare("DELETE FROM classrooms WHERE id = :id");
+            $result = $stmt->execute(['id' => $id]);
+            
+            $pdo->commit();
+            return $result;
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
     }
 }
