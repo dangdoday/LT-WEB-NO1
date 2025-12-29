@@ -8,6 +8,16 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
+session_start();
+if (empty($_SESSION['login_id'])) {
+    jsonResponse(['error' => 'Unauthorized'], 401);
+    exit;
+}
+if (strtolower($_SESSION['login_id']) !== 'admin') {
+    jsonResponse(['error' => 'Forbidden'], 403);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }

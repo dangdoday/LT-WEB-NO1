@@ -43,7 +43,8 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  if (['login', 'register', 'reset-password-request', 'reset-password'].includes(to.name)) {
+  // Cho phép màn login và màn gửi yêu cầu reset password khi chưa đăng nhập
+  if (to.name === 'login' || to.name === 'reset-password-request') {
     next()
     return
   }
