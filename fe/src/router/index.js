@@ -6,7 +6,6 @@ import BorrowDevice from '../pages/BorrowDevice.vue'
 import HistoryBorrowDevice from '../pages/HistoryBorrowDevice.vue'
 import DeviceRegister from '../pages/DeviceRegister.vue'
 import ClassroomCreate from '../pages/ClassroomCreate.vue'
-import ClassroomEdit from '../pages/ClassroomEdit.vue'
 import ClassroomSearch from '../pages/ClassroomSearch.vue'
 import DeviceAdvancedSearch from '../pages/DeviceAdvancedSearch.vue'
 import Login from '../pages/Login.vue'
@@ -24,7 +23,6 @@ const routes = [
   { path: '/teachers/register', name: 'teacher-register', component: TeacherRegister },
   { path: '/teachers/search', name: 'teacher-search', component: TeacherSearch },
   { path: '/classrooms/create', name: 'classroom-create', component: ClassroomCreate },
-  { path: '/classrooms/edit/:id', name: 'classroom-edit', component: ClassroomEdit },
   { path: '/classrooms/search', name: 'classroom-search', component: ClassroomSearch },
   { path: '/transactions/borrow', name: 'borrow-device', component: BorrowDevice },
   { path: '/history/borrow_device', name: 'transaction-list', component: HistoryBorrowDevice },
@@ -57,7 +55,7 @@ router.beforeEach(async (to, from, next) => {
         return
       }
     }
-  } catch (e) { }
+  } catch (e) {}
   next({ name: 'login' })
 })
 
