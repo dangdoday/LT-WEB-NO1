@@ -25,10 +25,10 @@ const validate = () => {
   let ok = true
 
   if (!loginId) {
-    errors.login_id = 'Hay nhap login id'
+    errors.login_id = 'Hãy nhập login id'
     ok = false
   } else if (loginId.length < 4) {
-    errors.login_id = 'Hay nhap login id toi thieu 4 ky tu'
+    errors.login_id = 'Hãy nhập login id tối thiểu 4 ký tự'
     ok = false
   }
 
@@ -58,14 +58,14 @@ const submit = async () => {
       if (payload.fields && payload.fields.login_id) {
         errors.login_id = payload.fields.login_id
       }
-      serverError.value = payload.error || 'Gui yeu cau that bai.'
+      serverError.value = payload.error || 'Gửi yêu cầu thất bại.'
       submitting.value = false
       return
     }
 
     step.value = 'complete'
   } catch (error) {
-    serverError.value = 'Khong the ket noi toi may chu.'
+    serverError.value = 'Không thể kết nối tới máy chủ.'
   } finally {
     submitting.value = false
   }
@@ -82,20 +82,20 @@ const goLogin = () => {
       <header class="card__header">
         <div>
           <p class="eyebrow">Password reset</p>
-          <h1>Gui yeu cau reset password</h1>
+          <h1>Gửi yêu cầu reset password</h1>
         </div>
       </header>
 
       <form v-if="step === 'input'" class="form" @submit.prevent="submit">
         <div class="form-grid">
-          <label for="loginId">Nguoi dung</label>
+          <label for="loginId">Người dùng</label>
           <div>
             <input
               id="loginId"
               v-model="form.login_id"
               type="text"
               maxlength="100"
-              placeholder="Nhap login id"
+              placeholder="Nhập login id"
             />
             <p v-if="errors.login_id" class="error">{{ errors.login_id }}</p>
           </div>
@@ -103,7 +103,7 @@ const goLogin = () => {
 
         <div class="actions">
           <button type="submit" class="primary" :disabled="submitting">
-            {{ submitting ? 'Dang gui...' : 'Gui yeu cau reset password' }}
+            {{ submitting ? 'Đang gửi...' : 'Gửi yêu cầu reset password' }}
           </button>
           <p v-if="serverError" class="error">{{ serverError }}</p>
         </div>
@@ -111,13 +111,8 @@ const goLogin = () => {
 
       <div v-else class="complete">
         <div class="complete__box">
-          <h2>Gui yeu cau thanh cong</h2>
-          <p>
-            Truy cap
-            <RouterLink class="reset-link" to="/reset-password">http://localhost:5173/reset-password</RouterLink>
-            de doi mat khau.
-          </p>
-          <button type="button" class="primary" @click="goLogin">Quay ve login</button>
+          <h2>Gửi yêu cầu thành công</h2>
+          <button type="button" class="primary" @click="goLogin">Quay về login</button>
         </div>
       </div>
     </div>
@@ -170,6 +165,7 @@ const goLogin = () => {
   display: grid;
   grid-template-columns: 160px 1fr;
   gap: 16px 20px;
+  align-items: center;
 }
 
 label {
@@ -186,6 +182,7 @@ input {
   padding: 12px 14px;
   font-size: 15px;
   font-family: inherit;
+  margin-left: 6px;
 }
 
 .actions {

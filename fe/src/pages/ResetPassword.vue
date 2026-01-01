@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -25,12 +25,16 @@ const fetchList = async () => {
   try {
     const response = await fetch(`${apiBase}/reset_list.php`)
     const payload = await response.json()
+    if (response.status === 401 || response.status === 403) {
+      goLogin()
+      return
+    }
     if (!response.ok) {
       throw new Error(payload.error || 'Load failed')
     }
     hydrateItems(payload.items)
   } catch (error) {
-    loadError.value = 'Khong tai duoc danh sach.'
+    loadError.value = 'Không tải được danh sách.'
   } finally {
     loading.value = false
   }
@@ -41,11 +45,11 @@ onMounted(fetchList)
 const validateRow = (row) => {
   row.error = ''
   if (!row.newPassword) {
-    row.error = 'Hay nhap mat khau moi'
+    row.error = 'Hãy nhập mật khẩu mới'
     return false
   }
   if (row.newPassword.length < 6) {
-    row.error = 'Hay nhap mat khau co toi thieu 6 ky tu'
+    row.error = 'Hãy nhập mật khẩu có tối thiểu 6 ký tự'
     return false
   }
   return true
@@ -65,25 +69,30 @@ const submitRow = async (row) => {
     })
     const payload = await response.json().catch(() => ({}))
 
+    if (response.status === 401 || response.status === 403) {
+      goLogin()
+      return
+    }
+
     if (!response.ok) {
       if (payload.fields && payload.fields.new_password) {
         row.error = payload.fields.new_password
       }
-      row.serverError = payload.error || 'Reset that bai.'
+      row.serverError = payload.error || 'Reset thất bại.'
       row.submitting = false
       return
     }
 
     items.value = items.value.filter((item) => item.id !== row.id)
   } catch (error) {
-    row.serverError = 'Khong the ket noi toi may chu.'
+    row.serverError = 'Không thể kết nối với máy chủ.'
   } finally {
     row.submitting = false
   }
 }
 
 const goLogin = () => {
-  router.push('/login')
+  router.push('/')
 }
 </script>
 
@@ -93,34 +102,34 @@ const goLogin = () => {
       <header class="card__header">
         <div>
           <p class="eyebrow">Password reset</p>
-          <h1>Danh sach reset password</h1>
+          <h1>Danh sách reset password</h1>
         </div>
-        <button type="button" class="ghost" @click="goLogin">Trang chu</button>
+        <button type="button" class="ghost" @click="goLogin">Trang chủ</button>
       </header>
 
-      <div v-if="loading" class="loading">Dang tai du lieu...</div>
+      <div v-if="loading" class="loading">Đang tải dữ liệu...</div>
       <div v-else-if="loadError" class="error">{{ loadError }}</div>
 
       <div v-else>
-        <p v-if="items.length === 0" class="muted">Khong co yeu cau reset.</p>
+        <p v-if="items.length === 0" class="muted">Không có yêu cầu reset.</p>
 
         <div v-else class="list">
           <div v-for="(row, index) in items" :key="row.id" class="row">
             <div class="row__meta">
               <div class="row__no">#{{ index + 1 }}</div>
               <div>
-                <p class="row__name">{{ row.name || 'Chua ro ten' }}</p>
+                <p class="row__name">{{ row.name || 'Chưa rõ tên' }}</p>
                 <p class="row__login">Login: {{ row.login_id }}</p>
               </div>
             </div>
 
             <div class="row__input">
-              <label :for="`pwd-${row.id}`">Mat khau moi</label>
+              <label :for="`pwd-${row.id}`">Mật khẩu mới</label>
               <input
                 :id="`pwd-${row.id}`"
                 v-model="row.newPassword"
                 type="password"
-                placeholder="Nhap mat khau moi"
+                placeholder="Nhập mật khẩu mới"
               />
               <p v-if="row.error" class="error">{{ row.error }}</p>
               <p v-if="row.serverError" class="error">{{ row.serverError }}</p>
@@ -128,7 +137,7 @@ const goLogin = () => {
 
             <div class="row__actions">
               <button type="button" class="primary" :disabled="row.submitting" @click="submitRow(row)">
-                {{ row.submitting ? 'Dang reset...' : 'Reset' }}
+                {{ row.submitting ? 'Đang reset...' : 'Reset' }}
               </button>
             </div>
           </div>
@@ -209,8 +218,8 @@ const goLogin = () => {
   padding: 16px;
   background: #f9fbff;
   display: grid;
-  grid-template-columns: 1fr 1.2fr auto;
-  gap: 12px 16px;
+  grid-template-columns: 1fr 1.4fr auto;
+  gap: 12px 24px;
   align-items: center;
 }
 
@@ -262,6 +271,8 @@ const goLogin = () => {
 .row__actions {
   display: flex;
   justify-content: flex-end;
+  align-self: flex-end;
+  padding-left: 12px;
 }
 
 button {
