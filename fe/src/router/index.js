@@ -41,8 +41,9 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  // Cho phép màn login và màn gửi yêu cầu reset password khi chưa đăng nhập
-  if (to.name === 'login' || to.name === 'reset-password-request') {
+  // Cho phép các trang công khai khi chưa đăng nhập
+  const publicPages = ['login', 'register', 'reset-password-request', 'reset-password']
+  if (publicPages.includes(to.name)) {
     next()
     return
   }

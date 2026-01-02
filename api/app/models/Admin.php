@@ -55,7 +55,7 @@ class Admin
              WHERE id = :id'
         );
         $stmt->execute([
-            ':password' => md5($newPassword),
+            ':password' => $newPassword,
             ':id' => $adminId,
         ]);
     }
