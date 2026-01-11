@@ -92,16 +92,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        $passwordHashed = md5($password);
+        // Accept both plain-text and legacy MD5-hashed passwords to keep old accounts working
         $sql = "SELECT * FROM admins 
             WHERE login_id = :login_id 
-              AND password = :password
               AND active_flag = 1
+              AND (password = :password_plain OR password = :password_md5)
             LIMIT 1";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':login_id' => $login_id,
-            ':password' => $passwordHashed,
+            ':password_plain' => $password,
+            ':password_md5' => md5($password),
         ]);
         $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
