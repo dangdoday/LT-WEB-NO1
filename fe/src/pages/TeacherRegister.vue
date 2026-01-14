@@ -227,13 +227,7 @@ const submit = async () => {
     <div class="card">
       <header class="card__header">
         <div>
-          <p class="eyebrow">{{ isEditMode ? 'Update Teacher' : 'Teacher Registration' }}</p>
           <h1>{{ isEditMode ? 'Cập nhật giáo viên' : 'Đăng ký giáo viên' }}</h1>
-        </div>
-        <div class="step-pill">
-          <span v-if="step === 'input'">Input</span>
-          <span v-else-if="step === 'confirm'">Confirm</span>
-          <span v-else>Complete</span>
         </div>
       </header>
 
@@ -269,21 +263,17 @@ const submit = async () => {
           </div>
 
           <label for="avatar">Avatar</label>
-          <div>
-            <!-- Khu vực Preview ảnh -->
-            <div v-if="avatarPreview" class="avatar-box mb-3">
+          <div class="avatar-inline">
+            <div v-if="avatarPreview" class="avatar-box avatar-preview">
               <img :src="avatarPreview" alt="Avatar preview" />
             </div>
-
-            <div class="file-row">
+            <div class="file-row compact">
               <input id="avatar" type="file" accept="image/*" @change="onAvatarChange" />
-              <label for="avatar" class="file-hint">Browse</label>
+              <p v-if="isEditMode" style="font-size:12px; color:#666; margin-top:4px;">
+                (Để trống nếu không muốn đổi ảnh)
+              </p>
+              <p v-if="errors.avatarFile" class="error">{{ errors.avatarFile }}</p>
             </div>
-            <!-- Gợi ý nhỏ khi đang Edit -->
-            <p v-if="isEditMode" style="font-size:12px; color:#666; margin-top:4px;">
-              (Để trống nếu không muốn đổi ảnh)
-            </p>
-            <p v-if="errors.avatarFile" class="error">{{ errors.avatarFile }}</p>
           </div>
 
           <label for="description">Mô tả thêm</label>
@@ -391,57 +381,35 @@ const submit = async () => {
 }
 
 .card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .card__header h1 {
-  margin: 8px 0 0;
+  margin: 0;
   font-size: 32px;
   letter-spacing: -0.02em;
-}
-
-.eyebrow {
-  text-transform: uppercase;
-  font-weight: 600;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  color: var(--muted);
-  margin: 0;
-}
-
-.step-pill {
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: rgba(46, 109, 180, 0.12);
-  color: var(--accent);
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 12px;
-  letter-spacing: 0.1em;
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: 160px 1fr;
-  gap: 16px 20px;
+  gap: 20px 24px;
+  max-width: 100%;
 }
 
 label,
 .label {
   font-weight: 600;
   color: var(--muted);
-  align-self: flex-start;
-  padding-top: 10px;
+  align-self: center;
 }
 
 input,
 select,
 textarea {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   border: 1px solid var(--line);
   background: #fff;
   border-radius: 12px;
@@ -455,26 +423,29 @@ textarea {
   min-height: 140px;
 }
 
+.avatar-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
+.avatar-preview {
+  margin-bottom: 4px;
+}
+
 .file-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
-  align-items: center;
+  width: 100%;
 }
 
-input[type='file'] {
-  padding: 8px;
-  background: #f3f6fb;
-}
-
-.file-hint {
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: var(--accent);
-  color: white;
-  font-size: 14px;
-  text-align: center;
-  cursor: pointer;
+.file-row input[type='file'] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 12px;
 }
 
 .actions {
@@ -546,10 +517,6 @@ button:disabled {
 .avatar-placeholder {
   font-weight: 700;
   color: var(--accent);
-}
-
-.mb-3 {
-  margin-bottom: 12px;
 }
 
 .description-box {
