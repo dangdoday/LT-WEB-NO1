@@ -33,20 +33,20 @@ const validate = () => {
   const description = form.description.trim()
 
   if (!name) {
-    errors.name = 'Hay nhap ten thiet bi.'
+    errors.name = 'Hãy nhập tên thiết bị.'
     ok = false
   }
 
   if (!description) {
-    errors.description = 'Hay nhap mo ta chi tiet.'
+    errors.description = 'Hãy nhập mô tả chi tiết.'
     ok = false
   } else if (description.length > 1000) {
-    errors.description = 'Khong nhap qua 1000 ky tu'
+    errors.description = 'Không nhập quá 1000 ký tự'
     ok = false
   }
 
   if (!form.avatarFile) {
-    errors.avatarFile = 'Hay chon avatar'
+    errors.avatarFile = 'Hãy chọn avatar'
     ok = false
   }
 
@@ -121,7 +121,7 @@ const submit = async () => {
           }
         })
       }
-      serverError.value = payload.error || 'Dang ky that bai.'
+      serverError.value = payload.error || 'Đăng ký thất bại.'
       submitting.value = false
       step.value = 'input'
       return
@@ -129,7 +129,7 @@ const submit = async () => {
 
     step.value = 'complete'
   } catch (error) {
-    serverError.value = 'Khong the ket noi toi may chu.'
+    serverError.value = 'Không thể kết nối tới máy chủ.'
     step.value = 'input'
   } finally {
     submitting.value = false
@@ -142,56 +142,60 @@ const submit = async () => {
     <div class="card">
       <header class="card__header">
         <div>
-          <p class="eyebrow">Device registration</p>
-          <h1>Dang ky thiet bi</h1>
+          <p class="eyebrow">THIẾT BỊ</p>
+          <h1>Đăng ký thiết bị</h1>
         </div>
         <div class="step-pill">
-          <span v-if="step === 'input'">Input</span>
-          <span v-else-if="step === 'confirm'">Confirm</span>
-          <span v-else>Complete</span>
+          <span v-if="step === 'input'">NHẬP LIỆU</span>
+          <span v-else-if="step === 'confirm'">XÁC NHẬN</span>
+          <span v-else>HOÀN TẤT</span>
         </div>
       </header>
 
-      <form v-if="step === 'input'" class="form" @submit.prevent="goConfirm">
+      <form v-show="step === 'input'" class="form" @submit.prevent="goConfirm">
         <div class="form-grid">
-          <label for="name">Ten thiet bi</label>
+          <label for="name">Tên thiết bị</label>
           <div>
-            <input id="name" v-model="form.name" type="text" maxlength="255" placeholder="Nhap ten thiet bi" />
+            <input id="name" v-model="form.name" type="text" maxlength="255" placeholder="Nhập tên thiết bị" />
             <p v-if="errors.name" class="error">{{ errors.name }}</p>
           </div>
 
-          <label for="description">Mo ta them</label>
+          <label for="description">Mô tả thêm</label>
           <div>
             <textarea
               id="description"
               v-model="form.description"
               maxlength="1000"
-              placeholder="Nhap mo ta chi tiet"
+              placeholder="Nhập mô tả chi tiết"
               rows="6"
             ></textarea>
             <p v-if="errors.description" class="error">{{ errors.description }}</p>
           </div>
 
           <label for="avatar">Avatar</label>
-          <div class="file-row">
-            <input id="avatar" type="file" accept="image/*" @change="onAvatarChange" />
-            <span class="file-hint">Browse</span>
-            <p v-if="errors.avatarFile" class="error">{{ errors.avatarFile }}</p>
+          <div class="avatar-inline">
+            <div v-if="avatarPreview" class="avatar-box avatar-preview">
+              <img :src="avatarPreview" alt="Avatar preview" />
+            </div>
+            <div class="file-row compact">
+              <input id="avatar" type="file" accept="image/*" @change="onAvatarChange" />
+              <p v-if="errors.avatarFile" class="error">{{ errors.avatarFile }}</p>
+            </div>
           </div>
         </div>
 
         <div class="actions">
-          <button type="submit" class="primary">Xac nhan</button>
+          <button type="submit" class="primary">Xác nhận</button>
           <p v-if="serverError" class="error">{{ serverError }}</p>
         </div>
       </form>
 
-      <div v-else-if="step === 'confirm'" class="confirm">
+      <div v-show="step === 'confirm'" class="confirm">
         <div class="form-grid">
-          <span class="label">Ten thiet bi</span>
+          <span class="label">Tên thiết bị</span>
           <span class="value">{{ form.name }}</span>
 
-          <span class="label">Mo ta chi tiet</span>
+          <span class="label">Mô tả chi tiết</span>
           <div class="value description-box">
             {{ form.description }}
           </div>
@@ -204,19 +208,19 @@ const submit = async () => {
         </div>
 
         <div class="actions">
-          <button type="button" class="ghost" @click="goEdit">Sua lai</button>
+          <button type="button" class="ghost" @click="goEdit">Sửa lại</button>
           <button type="button" class="primary" :disabled="submitting" @click="submit">
-            {{ submitting ? 'Dang ky...' : 'Dang ky' }}
+            {{ submitting ? 'Đăng ký...' : 'Đăng ký' }}
           </button>
           <p v-if="serverError" class="error">{{ serverError }}</p>
         </div>
       </div>
 
-      <div v-else class="complete">
+      <div v-show="step === 'complete'" class="complete">
         <div class="complete__box">
-          <h2>Dang ky thiet bi thanh cong</h2>
-          <p>Ban da dang ky thiet bi thanh cong.</p>
-          <button type="button" class="primary" @click="goHome">Tro ve trang chu</button>
+          <h2>Đăng ký thiết bị thành công</h2>
+          <p>Bạn đã đăng ký thiết bị thành công.</p>
+          <button type="button" class="primary" @click="goHome">Trở về trang chủ</button>
         </div>
       </div>
     </div>
@@ -299,7 +303,8 @@ const submit = async () => {
 .form-grid {
   display: grid;
   grid-template-columns: 160px 1fr;
-  gap: 16px 20px;
+  gap: 16px 22px;
+  max-width: 850px;
 }
 
 label,
@@ -326,26 +331,29 @@ textarea {
   min-height: 140px;
 }
 
+.avatar-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  max-width: 850px;
+}
+
+.avatar-preview {
+  margin-bottom: 4px;
+}
+
 .file-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
-  align-items: center;
+  width: 100%;
 }
 
-input[type='file'] {
-  padding: 8px;
-  background: #f3f6fb;
-}
-
-.file-hint {
+.file-row input[type='file'] {
+  width: 100%;
+  height: 29px;
   padding: 10px 14px;
-  border-radius: 10px;
-  background: var(--accent);
-  color: white;
-  font-size: 14px;
-  text-align: center;
 }
+
 
 .actions {
   margin-top: 28px;
@@ -452,6 +460,7 @@ button:disabled {
 @media (max-width: 720px) {
   .form-grid {
     grid-template-columns: 1fr;
+    max-width: 100%;
   }
 
   .card {

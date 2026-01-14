@@ -10,6 +10,12 @@ import ClassroomSearch from '../pages/ClassroomSearch.vue'
 import DeviceAdvancedSearch from '../pages/DeviceAdvancedSearch.vue'
 import Login from '../pages/Login.vue'
 import Register from '../pages/Register.vue'
+import DeviceSearch from '../pages/DeviceSearch.vue'
+import DeviceUpdate from '../pages/DeviceUpdate.vue'
+import ReturnDevice from '../pages/ReturnDevice.vue'
+import RequestReset from '../pages/RequestReset.vue'
+import ResetPassword from '../pages/ResetPassword.vue'
+import ClassroomEdit from '../pages/ClassroomEdit.vue'
 
 const routes = [
   { path: '/', name: 'home', component: Home },
@@ -22,7 +28,13 @@ const routes = [
   { path: '/transactions/borrow', name: 'borrow-device', component: BorrowDevice },
   { path: '/history/borrow_device', name: 'transaction-list', component: HistoryBorrowDevice },
   { path: '/devices/register', name: 'device-register', component: DeviceRegister },
+  { path: '/transactions/return', name: 'transaction-return', component: ReturnDevice },
   { path: '/devices/advanced-search', name: 'device-advanced-search', component: DeviceAdvancedSearch },
+  { path: '/transactions/search', name: 'device-search', component: DeviceSearch },
+  { path: '/devices/update', name: 'device-update', component: DeviceUpdate },
+  { path: '/reset-password-request', name: 'reset-password-request', component: RequestReset },
+  { path: '/reset-password', name: 'reset-password', component: ResetPassword },
+  { path: '/classroom/edit/:id', name: 'classroom-edit', component: ClassroomEdit },
 ]
 
 const router = createRouter({
@@ -30,14 +42,13 @@ const router = createRouter({
   routes,
 })
 
-
-// Navigation guard: chỉ cho phép vào các trang khi đã login
 router.beforeEach(async (to, from, next) => {
-  if (to.name === 'login' || to.name === 'register') {
+  // Cho phép các trang công khai khi chưa đăng nhập
+  const publicPages = ['login', 'register', 'reset-password-request', 'reset-password']
+  if (publicPages.includes(to.name)) {
     next()
     return
   }
-  // Kiểm tra trạng thái đăng nhập qua API
   try {
     const res = await fetch('/api/home.php')
     if (res.ok) {
@@ -47,7 +58,7 @@ router.beforeEach(async (to, from, next) => {
         return
       }
     }
-  } catch (e) { }
+  } catch (e) {}
   next({ name: 'login' })
 })
 
