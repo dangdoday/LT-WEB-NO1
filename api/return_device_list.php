@@ -4,6 +4,7 @@ require_once __DIR__ . '/app/common/db.php';
 require_once __DIR__ . '/app/helpers/response.php';
 
 header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     jsonResponse(['error' => 'Method not allowed'], 405);
@@ -16,6 +17,9 @@ $classroomId = $_GET['classroom_id'] ?? '';
 
 try {
     $pdo = get_db_connection();
+
+    $isSearching = ($deviceName !== '' || $teacherId !== '' || $classroomId !== '');
+
     $sql = "SELECT d.id as device_id,
                    d.name as device_name,
                    t.id as transaction_id,
@@ -35,6 +39,11 @@ try {
             WHERE 1=1";
 
     $params = [];
+
+    if ($isSearching) {
+        $sql .= " AND t.id IS NOT NULL AND (t.returned_date IS NULL OR t.returned_date = '')";
+    }
+
     if ($deviceName !== '') {
         $sql .= " AND d.name LIKE ?";
         $params[] = "%$deviceName%";
@@ -58,18 +67,17 @@ try {
     foreach ($rows as $row) {
         $hasTransaction = !empty($row['transaction_id']);
         $isBorrowed = $hasTransaction && ($row['returned_date'] === null || $row['returned_date'] === '');
+        
         $data[] = [
             'device_id' => $row['device_id'],
             'device_name' => $row['device_name'],
             'status' => $isBorrowed ? 'borrowed' : 'available',
-            'status_label' => $isBorrowed ? 'Dang muon' : 'Dang ranh',
-            'can_return' => $isBorrowed,
+            'status_label' => $isBorrowed ? 'Đang mượn' : 'Đang rảnh',
+            'can_return' => $isBorrowed, 
         ];
     }
 
     jsonResponse(['status' => 'success', 'data' => $data]);
 } catch (Throwable $e) {
-    jsonResponse(['status' => 'error', 'error' => 'Server error'], 500);
+    jsonResponse(['status' => 'error', 'error' => $e->getMessage()], 500);
 }
-
-
