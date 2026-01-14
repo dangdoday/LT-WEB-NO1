@@ -16,10 +16,23 @@ try {
     $teacher = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($teacher) {
-        // Trả về đường dẫn ảnh đầy đủ để frontend hiển thị
-        // Giả sử ảnh bạn lưu trong folder: api/web/image/avatar/
-        // Bạn cần chỉnh lại đường dẫn này cho đúng cấu trúc folder thực tế của bạn
-        $teacher['avatar_url'] = '/api/web/image/avatar/' . $teacher['avatar'];
+        // Trả về đường dẫn ảnh đầy đủ để frontend hiển thị.
+        // DB có thể lưu dạng:
+        // - 'web/image/avatar/<file>' (chuẩn)
+        // - '<file>'
+        // - '/api/web/image/avatar/<file>' (hiếm)
+        $avatar = $teacher['avatar'] ?? '';
+        if ($avatar === '') {
+            $teacher['avatar_url'] = '';
+        } elseif (preg_match('/^https?:\/\//', $avatar)) {
+            $teacher['avatar_url'] = $avatar;
+        } elseif (strpos($avatar, '/api/') === 0) {
+            $teacher['avatar_url'] = $avatar;
+        } elseif (strpos($avatar, 'web/') === 0) {
+            $teacher['avatar_url'] = '/api/' . $avatar;
+        } else {
+            $teacher['avatar_url'] = '/api/web/image/avatar/' . $avatar;
+        }
 
         jsonResponse(['status' => 'success', 'data' => $teacher]);
     } else {

@@ -18,9 +18,13 @@ function get_db_connection()
         ]);
         $pdo->exec('PRAGMA foreign_keys = ON');
         return $pdo;
-    } catch (PDOException $e) {
+    } catch (Throwable $e) {
         http_response_code(500);
-        echo json_encode(['error' => 'Database connection failed', 'message' => $e->getMessage()]);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(
+            ['error' => 'Database connection failed', 'message' => $e->getMessage()],
+            JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT
+        );
         exit;
     }
 }

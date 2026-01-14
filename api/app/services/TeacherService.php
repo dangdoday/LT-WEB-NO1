@@ -68,7 +68,7 @@ class TeacherService
         return ['id' => $id, 'avatar' => $relativePath, 'specialized' => $data['specialized'], 'degree' => $data['degree'], 'description' => $data['description']];
     }
 
-    public function update($id, array $data, array $file = null)
+    public function update($id, array $data, ?array $file = null)
     {
         $updateData = [
             'name' => $data['name'] ?? null,

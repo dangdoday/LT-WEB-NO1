@@ -53,6 +53,19 @@ const selectedDegreeLabel = computed(() => {
   return degreeOptions.find((item) => item.value === form.degree)?.label || ''
 })
 
+const resolveAvatarUrl = (avatar) => {
+  if (!avatar) return ''
+  if (typeof avatar !== 'string') return ''
+  // Already absolute
+  if (/^https?:\/\//.test(avatar)) return avatar
+  // Already proxied path
+  if (avatar.startsWith('/api/')) return avatar
+  // Stored as relative path like 'web/image/avatar/...'
+  if (avatar.startsWith('web/')) return `/api/${avatar}`
+  // Stored as filename
+  return `/api/web/image/avatar/${avatar}`
+}
+
 // --- LOGIC MỚI: Load dữ liệu cũ khi vào trang Sửa ---
 onMounted(async () => {
   if (isEditMode.value) {
@@ -70,9 +83,8 @@ onMounted(async () => {
         form.description = t.description
         form.currentAvatar = t.avatar
 
-        // Hiển thị ảnh cũ. Lưu ý: API cần trả về 'avatar_url' là đường dẫn đầy đủ
-        // Nếu API chỉ trả về tên file, bạn cần nối chuỗi: `/api/web/image/avatar/${t.avatar}`
-        avatarPreview.value = t.avatar_url || `/api/web/image/avatar/${t.avatar}`
+        // Hiển thị ảnh cũ (API đã trả avatar_url, fallback vẫn an toàn)
+        avatarPreview.value = resolveAvatarUrl(t.avatar_url || t.avatar)
       } else {
         alert('Không tìm thấy giáo viên!')
         router.push('/teachers/search')
@@ -137,7 +149,7 @@ watch(
       // 2. Nếu hủy chọn file (file = null)
       else if (!file && isEditMode.value && form.currentAvatar) {
         // Quay lại hiển thị ảnh cũ từ server
-        avatarPreview.value = `/api/web/image/avatar/${form.currentAvatar}`
+        avatarPreview.value = resolveAvatarUrl(form.currentAvatar)
       }
       // 3. Nếu hủy chọn và không có ảnh cũ (xóa trắng)
       else {
