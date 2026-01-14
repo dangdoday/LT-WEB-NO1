@@ -66,11 +66,14 @@ class TeacherController
             $descAscii = $this->vnToAscii($row['description']);
             $degreeLabel = $degreeMap[$row['degree']] ?? '';
             $degreeAscii = $this->vnToAscii($degreeLabel);
-            if (
-                strpos($nameAscii, $kw) !== false ||
-                strpos($descAscii, $kw) !== false ||
-                strpos($degreeAscii, $kw) !== false
-            ) {
+            
+            // Tìm kiếm trong tên, mô tả, học vị (label), hoặc code của học vị
+            $matched = strpos($nameAscii, $kw) !== false ||
+                       strpos($descAscii, $kw) !== false ||
+                       strpos($degreeAscii, $kw) !== false ||
+                       strpos($row['degree'], $kw) !== false; // Tìm theo code học vị
+            
+            if ($matched) {
                 $result[] = $row;
             }
         }
