@@ -159,12 +159,14 @@ onMounted(() => {
   padding: 24px;
   margin: 0 auto 32px;
   max-width: 600px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: 100px 1fr;
-  gap: 16px 20px;
+  grid-template-columns: auto 1fr;
+  gap: 16px 24px;
   align-items: center;
 }
 
@@ -172,6 +174,7 @@ label {
   font-weight: 600;
   color: #5b6475;
   text-align: right;
+  white-space: nowrap;
 }
 
 input, select {
@@ -180,7 +183,14 @@ input, select {
   border-radius: 8px;
   font-size: 15px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   background: white;
+  box-sizing: border-box;
+}
+
+.page *, .page *::before, .page *::after {
+  box-sizing: border-box;
 }
 
 .actions {
