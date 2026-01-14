@@ -16,3 +16,6 @@ This runs the backend and frontend servers.
 
 - The frontend server runs on port 5173 by default.
 - The backend server runs on port 8000 by default.
+
+
+link commit:https://docs.google.com/spreadsheets/d/1wBdMGBdLOZ0Jwtr2grzdQX4FZEE7z0wh3MfpcJefhkU/edit?gid=0#gid=0
