@@ -1,19 +1,26 @@
 <script setup>
-import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute() // Dùng để lấy ID từ URL
+
 const step = ref('input')
 const submitting = ref(false)
 const serverError = ref('')
 const avatarPreview = ref('')
 
+// Kiểm tra xem có đang ở chế độ Sửa không (có ID trên URL)
+const isEditMode = computed(() => !!route.query.id)
+
 const form = reactive({
+  id: '',
   name: '',
   specialized: '',
   degree: '',
   description: '',
   avatarFile: null,
+  currentAvatar: '' // Lưu tên file ảnh cũ (để hiện lại nếu user hủy chọn ảnh mới)
 })
 
 const errors = reactive({
@@ -25,17 +32,17 @@ const errors = reactive({
 })
 
 const specializedOptions = [
-  { value: '001', label: '001: Khoa hoc may tinh' },
-  { value: '002', label: '002: Khoa hoc du lieu' },
-  { value: '003', label: '003: Hai duong hoc' },
+  { value: '001', label: '001: Khoa học máy tính' },
+  { value: '002', label: '002: Khoa học dữ liệu' },
+  { value: '003', label: '003: Hải dương học' },
 ]
 
 const degreeOptions = [
-  { value: '001', label: '001: Cu nhan' },
-  { value: '002', label: '002: Thac si' },
-  { value: '003', label: '003: Tien si' },
-  { value: '004', label: '004: Pho giao su' },
-  { value: '005', label: '005: Giao su' },
+  { value: '001', label: '001: Cử nhân' },
+  { value: '002', label: '002: Thạc sĩ' },
+  { value: '003', label: '003: Tiến sĩ' },
+  { value: '004', label: '004: Phó giáo sư' },
+  { value: '005', label: '005: Giáo sư' },
 ]
 
 const selectedSpecializedLabel = computed(() => {
@@ -44,6 +51,37 @@ const selectedSpecializedLabel = computed(() => {
 
 const selectedDegreeLabel = computed(() => {
   return degreeOptions.find((item) => item.value === form.degree)?.label || ''
+})
+
+// --- LOGIC MỚI: Load dữ liệu cũ khi vào trang Sửa ---
+onMounted(async () => {
+  if (isEditMode.value) {
+    try {
+      // Gọi API lấy thông tin giáo viên
+      const res = await fetch(`/api/get_teacher.php?id=${route.query.id}`)
+      const data = await res.json()
+
+      if (data.status === 'success') {
+        const t = data.data
+        form.id = t.id
+        form.name = t.name
+        form.specialized = t.specialized
+        form.degree = t.degree
+        form.description = t.description
+        form.currentAvatar = t.avatar
+
+        // Hiển thị ảnh cũ. Lưu ý: API cần trả về 'avatar_url' là đường dẫn đầy đủ
+        // Nếu API chỉ trả về tên file, bạn cần nối chuỗi: `/api/web/image/avatar/${t.avatar}`
+        avatarPreview.value = t.avatar_url || `/api/web/image/avatar/${t.avatar}`
+      } else {
+        alert('Không tìm thấy giáo viên!')
+        router.push('/teachers/search')
+      }
+    } catch (e) {
+      console.error(e)
+      serverError.value = 'Lỗi tải dữ liệu giáo viên.'
+    }
+  }
 })
 
 const resetErrors = () => {
@@ -60,34 +98,21 @@ const validate = () => {
   const name = form.name.trim()
   const description = form.description.trim()
 
-  if (!name) {
-    errors.name = 'Hay nhap ten giao vien.'
-    ok = false
-  } else if (name.length > 100) {
-    errors.name = 'Khong nhap qua 100 ky tu.'
-    ok = false
-  }
+  if (!name) { errors.name = 'Hãy nhập tên giáo viên.'; ok = false }
+  else if (name.length > 100) { errors.name = 'Không nhập quá 100 ký tự.'; ok = false }
 
-  if (!form.specialized) {
-    errors.specialized = 'Hay chon chuyen nganh.'
-    ok = false
-  }
+  if (!form.specialized) { errors.specialized = 'Hãy chọn chuyên ngành.'; ok = false }
 
-  if (!form.degree) {
-    errors.degree = 'Hay chon bang cap.'
-    ok = false
-  }
+  if (!form.degree) { errors.degree = 'Hãy chọn bằng cấp.'; ok = false }
 
-  if (!description) {
-    errors.description = 'Hay nhap mo ta chi tiet.'
-    ok = false
-  } else if (description.length > 1000) {
-    errors.description = 'Khong nhap qua 1000 ky tu.'
-    ok = false
-  }
+  if (!description) { errors.description = 'Hãy nhập mô tả chi tiết.'; ok = false }
+  else if (description.length > 1000) { errors.description = 'Không nhập quá 1000 ký tự.'; ok = false }
 
-  if (!form.avatarFile) {
-    errors.avatarFile = 'Hay chon avatar.'
+  // Logic validate ảnh:
+  // - Nếu là Thêm mới: Bắt buộc chọn.
+  // - Nếu là Sửa: Chỉ bắt lỗi nếu KHÔNG chọn ảnh mới VÀ KHÔNG có ảnh cũ.
+  if (!isEditMode.value && !form.avatarFile) {
+    errors.avatarFile = 'Hãy chọn avatar.'
     ok = false
   }
 
@@ -100,23 +125,29 @@ const onAvatarChange = (event) => {
 }
 
 watch(
-  () => form.avatarFile,
-  (file, previous) => {
-    if (avatarPreview.value) {
-      URL.revokeObjectURL(avatarPreview.value)
-      avatarPreview.value = ''
+    () => form.avatarFile,
+    (file, previous) => {
+      // 1. Nếu chọn file mới -> Hiển thị file đó
+      if (file) {
+        if (avatarPreview.value && avatarPreview.value.startsWith('blob:')) {
+          URL.revokeObjectURL(avatarPreview.value)
+        }
+        avatarPreview.value = URL.createObjectURL(file)
+      }
+      // 2. Nếu hủy chọn file (file = null)
+      else if (!file && isEditMode.value && form.currentAvatar) {
+        // Quay lại hiển thị ảnh cũ từ server
+        avatarPreview.value = `/api/web/image/avatar/${form.currentAvatar}`
+      }
+      // 3. Nếu hủy chọn và không có ảnh cũ (xóa trắng)
+      else {
+        avatarPreview.value = ''
+      }
     }
-    if (file) {
-      avatarPreview.value = URL.createObjectURL(file)
-    }
-    if (!file && previous) {
-      form.avatarFile = null
-    }
-  }
 )
 
 onBeforeUnmount(() => {
-  if (avatarPreview.value) {
+  if (avatarPreview.value && avatarPreview.value.startsWith('blob:')) {
     URL.revokeObjectURL(avatarPreview.value)
   }
 })
@@ -144,11 +175,21 @@ const submit = async () => {
   try {
     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
     const formData = new FormData()
+
+    // Gửi ID nếu là update
+    if (isEditMode.value) {
+      formData.append('id', form.id)
+    }
+
     formData.append('name', form.name.trim())
     formData.append('specialized', form.specialized)
     formData.append('degree', form.degree)
     formData.append('description', form.description.trim())
-    formData.append('avatar', form.avatarFile)
+
+    // Chỉ gửi file nếu có chọn file mới
+    if (form.avatarFile) {
+      formData.append('avatar', form.avatarFile)
+    }
 
     const response = await fetch(`${apiBase}/teacher_register.php`, {
       method: 'POST',
@@ -156,7 +197,8 @@ const submit = async () => {
     })
 
     const payload = await response.json().catch(() => ({}))
-    if (!response.ok) {
+
+    if (!response.ok || payload.status === 'error') {
       if (payload.fields) {
         Object.keys(payload.fields).forEach((key) => {
           if (errors[key] !== undefined) {
@@ -164,7 +206,7 @@ const submit = async () => {
           }
         })
       }
-      serverError.value = payload.error || 'Dang ky that bai.'
+      serverError.value = payload.message || (isEditMode.value ? 'Cập nhật thất bại.' : 'Đăng ký thất bại.')
       submitting.value = false
       step.value = 'input'
       return
@@ -172,7 +214,7 @@ const submit = async () => {
 
     step.value = 'complete'
   } catch (error) {
-    serverError.value = 'Khong the ket noi toi may chu.'
+    serverError.value = 'Không thể kết nối tới máy chủ.'
     step.value = 'input'
   } finally {
     submitting.value = false
@@ -185,8 +227,8 @@ const submit = async () => {
     <div class="card">
       <header class="card__header">
         <div>
-          <p class="eyebrow">Teacher registration</p>
-          <h1>Dang ky giao vien</h1>
+          <p class="eyebrow">{{ isEditMode ? 'Update Teacher' : 'Teacher Registration' }}</p>
+          <h1>{{ isEditMode ? 'Cập nhật giáo viên' : 'Đăng ký giáo viên' }}</h1>
         </div>
         <div class="step-pill">
           <span v-if="step === 'input'">Input</span>
@@ -195,18 +237,19 @@ const submit = async () => {
         </div>
       </header>
 
+      <!-- STEP 1: INPUT -->
       <form v-if="step === 'input'" class="form" @submit.prevent="goConfirm">
         <div class="form-grid">
-          <label for="name">Ho va Ten</label>
+          <label for="name">Họ và Tên</label>
           <div>
-            <input id="name" v-model="form.name" type="text" maxlength="100" placeholder="Nhap ten giao vien" />
+            <input id="name" v-model="form.name" type="text" maxlength="100" placeholder="Nhập tên giáo viên" />
             <p v-if="errors.name" class="error">{{ errors.name }}</p>
           </div>
 
-          <label for="specialized">Chuyen nganh</label>
+          <label for="specialized">Chuyên ngành</label>
           <div>
             <select id="specialized" v-model="form.specialized">
-              <option disabled value="">Chon chuyen nganh</option>
+              <option disabled value="">Chọn chuyên ngành</option>
               <option v-for="option in specializedOptions" :key="option.value" :value="option.value">
                 {{ option.label }}
               </option>
@@ -214,10 +257,10 @@ const submit = async () => {
             <p v-if="errors.specialized" class="error">{{ errors.specialized }}</p>
           </div>
 
-          <label for="degree">Hoc vi</label>
+          <label for="degree">Học vị</label>
           <div>
             <select id="degree" v-model="form.degree">
-              <option disabled value="">Chon bang cap</option>
+              <option disabled value="">Chọn bằng cấp</option>
               <option v-for="option in degreeOptions" :key="option.value" :value="option.value">
                 {{ option.label }}
               </option>
@@ -226,40 +269,53 @@ const submit = async () => {
           </div>
 
           <label for="avatar">Avatar</label>
-          <div class="file-row">
-            <input id="avatar" type="file" accept="image/*" @change="onAvatarChange" />
-            <span class="file-hint">Browse</span>
+          <div>
+            <!-- Khu vực Preview ảnh -->
+            <div v-if="avatarPreview" class="avatar-box mb-3">
+              <img :src="avatarPreview" alt="Avatar preview" />
+            </div>
+
+            <div class="file-row">
+              <input id="avatar" type="file" accept="image/*" @change="onAvatarChange" />
+              <label for="avatar" class="file-hint">Browse</label>
+            </div>
+            <!-- Gợi ý nhỏ khi đang Edit -->
+            <p v-if="isEditMode" style="font-size:12px; color:#666; margin-top:4px;">
+              (Để trống nếu không muốn đổi ảnh)
+            </p>
             <p v-if="errors.avatarFile" class="error">{{ errors.avatarFile }}</p>
           </div>
 
-          <label for="description">Mo ta them</label>
+          <label for="description">Mô tả thêm</label>
           <div>
             <textarea
-              id="description"
-              v-model="form.description"
-              maxlength="1000"
-              placeholder="Nhap mo ta chi tiet"
-              rows="6"
+                id="description"
+                v-model="form.description"
+                maxlength="1000"
+                placeholder="Nhập mô tả chi tiết"
+                rows="6"
             ></textarea>
             <p v-if="errors.description" class="error">{{ errors.description }}</p>
           </div>
         </div>
 
         <div class="actions">
-          <button type="submit" class="primary">Xac nhan</button>
+          <button type="submit" class="primary">Xác nhận</button>
           <p v-if="serverError" class="error">{{ serverError }}</p>
         </div>
       </form>
 
+      <!-- STEP 2: CONFIRM -->
       <div v-else-if="step === 'confirm'" class="confirm">
         <div class="form-grid">
-          <span class="label">Ho va Ten</span>
+          <!-- Hiển thị lại đầy đủ các trường -->
+          <span class="label">Họ và Tên</span>
           <span class="value">{{ form.name }}</span>
 
-          <span class="label">Chuyen nganh</span>
+          <span class="label">Chuyên ngành</span>
           <span class="value">{{ selectedSpecializedLabel }}</span>
 
-          <span class="label">Hoc vi</span>
+          <span class="label">Học vị</span>
           <span class="value">{{ selectedDegreeLabel }}</span>
 
           <span class="label">Avatar</span>
@@ -268,26 +324,27 @@ const submit = async () => {
             <span v-else class="avatar-placeholder">IMAGE</span>
           </div>
 
-          <span class="label">Mo ta them</span>
+          <span class="label">Mô tả thêm</span>
           <div class="value description-box">
             {{ form.description }}
           </div>
         </div>
 
         <div class="actions">
-          <button type="button" class="ghost" @click="goEdit">Sua lai</button>
+          <button type="button" class="ghost" @click="goEdit">Sửa lại</button>
           <button type="button" class="primary" :disabled="submitting" @click="submit">
-            {{ submitting ? 'Dang ky...' : 'Dang ky' }}
+            {{ submitting ? 'Đang xử lý...' : (isEditMode ? 'Cập nhật' : 'Đăng ký') }}
           </button>
           <p v-if="serverError" class="error">{{ serverError }}</p>
         </div>
       </div>
 
+      <!-- STEP 3: COMPLETE -->
       <div v-else class="complete">
         <div class="complete__box">
-          <h2>Dang ky thanh cong</h2>
-          <p>Ban da dang ky giao vien thanh cong.</p>
-          <button type="button" class="primary" @click="goHome">Tro ve trang chu</button>
+          <h2>{{ isEditMode ? 'Cập nhật thành công' : 'Đăng ký thành công' }}</h2>
+          <p>{{ isEditMode ? 'Thông tin giáo viên đã được cập nhật.' : 'Bạn đã đăng ký giáo viên thành công.' }}</p>
+          <button type="button" class="primary" @click="goHome">Trở về trang chủ</button>
         </div>
       </div>
     </div>
@@ -311,7 +368,7 @@ const submit = async () => {
   margin: 0;
   font-family: 'Space Grotesk', system-ui, sans-serif;
   background: radial-gradient(circle at top, #f4d9b5 0%, #f5f0e6 40%) no-repeat,
-    linear-gradient(135deg, #f5f0e6 0%, #dbe4f2 100%);
+  linear-gradient(135deg, #f5f0e6 0%, #dbe4f2 100%);
   color: var(--ink);
 }
 
@@ -377,7 +434,8 @@ label,
 .label {
   font-weight: 600;
   color: var(--muted);
-  align-self: center;
+  align-self: flex-start;
+  padding-top: 10px;
 }
 
 input,
@@ -416,6 +474,7 @@ input[type='file'] {
   color: white;
   font-size: 14px;
   text-align: center;
+  cursor: pointer;
 }
 
 .actions {
@@ -460,9 +519,12 @@ button:disabled {
 
 .confirm .value {
   font-weight: 600;
-  align-self: center;
+  align-self: center; /* Để text căn giữa theo dòng nếu grid row cao */
+  align-self: flex-start;
+  padding-top: 10px;
 }
 
+/* Avatar Box */
 .avatar-box {
   width: 140px;
   height: 140px;
@@ -484,6 +546,10 @@ button:disabled {
 .avatar-placeholder {
   font-weight: 700;
   color: var(--accent);
+}
+
+.mb-3 {
+  margin-bottom: 12px;
 }
 
 .description-box {

@@ -1,16 +1,15 @@
-
 <?php
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 session_start();
 header('Content-Type: application/json; charset=utf-8');
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST');
 
 require_once __DIR__ . '/app/common/define.php';
 
 $pdo = null;
 try {
-    $pdo = new PDO("sqlite:" . DB_PATH);
+    $pdo = new PDO('sqlite:' . DB_PATH);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     echo json_encode(['status' => 'error', 'message' => 'Database connection failed']);
@@ -49,16 +48,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if (empty($errors)) {
+
+   if (empty($errors)) {
+                // Accept both plain-text and legacy MD5-hashed passwords to keep old accounts working
         $sql = "SELECT * FROM admins 
             WHERE login_id = :login_id 
-              AND password = :password
               AND active_flag = 1
+              AND (password = :password_plain OR password = :password_md5)
             LIMIT 1";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':login_id' => $login_id,
-            ':password' => $password
+            ':password_plain' => $password,
+            ':password_md5' => md5($password),
         ]);
         $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -68,18 +70,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['login_id'] = $admin['login_id'];
             $_SESSION['login_time'] = date('Y-m-d H:i');
             echo json_encode([
-                'status' => 'success', 
-                'login_id' => $admin['login_id'], 
-                'login_time' => $_SESSION['login_time']
+                'status' => 'success',
+                'login_id' => $admin['login_id'],
+                'login_time' => $_SESSION['login_time'],
             ]);
             exit;
         }
     }
-    
+
     echo json_encode(['status' => 'error', 'errors' => $errors]);
     exit;
 }
 
 http_response_code(405);
 echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
-?>

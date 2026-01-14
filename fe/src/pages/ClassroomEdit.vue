@@ -1,16 +1,15 @@
 <script setup>
-import { reactive, ref, watch, onBeforeUnmount } from "vue";
-import { useRouter } from "vue-router";
-import { useClassroom } from "../composables/useClassroom";
-
-// --- THÊM DÒNG NÀY: Import danh sách tòa nhà từ file chung ---
+import { reactive, ref, watch, onMounted, onBeforeUnmount } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { BUILDINGS } from "@/constants/options.js";
 
+const route = useRoute();
 const router = useRouter();
-const { createClassroom } = useClassroom();
+const classroomId = route.params.id;
 
 const step = ref("input");
 const submitting = ref(false);
+const loading = ref(true);
 const serverError = ref("");
 const avatarPreview = ref("");
 
@@ -42,33 +41,52 @@ const validate = () => {
   const description = form.description.trim();
 
   if (!name) {
-    errors.name = "Please enter a name.";
+    errors.name = "Vui lòng nhập tên phòng.";
     ok = false;
   } else if (name.length > 100) {
-    errors.name = "Name is too long.";
+    errors.name = "Tên quá dài.";
     ok = false;
   }
 
   if (!description) {
-    errors.description = "Please enter a description.";
+    errors.description = "Vui lòng nhập mô tả.";
     ok = false;
   } else if (description.length > 1000) {
-    errors.description = "Description is too long.";
+    errors.description = "Mô tả quá dài.";
     ok = false;
   }
 
   if (!form.building) {
-    errors.building = "Please enter the building.";
+    errors.building = "Vui lòng chọn tòa nhà.";
     ok = false;
   }
 
-  if (!form.avatarFile) {
-    errors.avatarFile = "Please select an avatar image.";
-    ok = false;
-  }
+  // Not strictly required to change avatar on edit
+  // if (!form.avatarFile && !avatarPreview.value) { ... }
 
   return ok;
 };
+
+// Fetch data
+onMounted(async () => {
+  try {
+    const res = await fetch(`http://localhost:8000/classroom.php?id=${classroomId}`);
+    if (!res.ok) throw new Error("Could not fetch classroom");
+    const data = await res.json();
+    
+    form.name = data.name;
+    form.description = data.description;
+    form.building = data.building;
+    if (data.avatar) {
+      avatarPreview.value = `http://localhost:8000/${data.avatar}`;
+    }
+    loading.value = false;
+  } catch (err) {
+    console.error(err);
+    alert("Không tìm thấy phòng học hoặc lỗi kết nối");
+    router.push("/classrooms/search");
+  }
+});
 
 const onAvatarChange = (event) => {
   const file = event.target.files?.[0] || null;
@@ -85,24 +103,22 @@ const triggerFileInput = () => {
 
 watch(
   () => form.avatarFile,
-  (file, previous) => {
-    if (avatarPreview.value) {
-      URL.revokeObjectURL(avatarPreview.value);
-      avatarPreview.value = "";
-    }
+  (file) => {
     if (file) {
+      // If user picks a new file, show it
+      if (avatarPreview.value && avatarPreview.value.startsWith("blob:")) {
+         URL.revokeObjectURL(avatarPreview.value);
+      }
       avatarPreview.value = URL.createObjectURL(file);
       avatarName.value = file.name;
-    }
-    if (!file && previous) {
-      form.avatarFile = null;
-      avatarName.value = "";
     }
   }
 );
 
 onBeforeUnmount(() => {
-  if (avatarPreview.value) URL.revokeObjectURL(avatarPreview.value);
+  if (avatarPreview.value && avatarPreview.value.startsWith("blob:")) {
+    URL.revokeObjectURL(avatarPreview.value);
+  }
 });
 
 const goConfirm = () => {
@@ -111,7 +127,7 @@ const goConfirm = () => {
 };
 
 const goEdit = () => (step.value = "input");
-const goHome = () => router.push("/");
+const goHome = () => router.push("/classrooms/search");
 
 const submit = async () => {
   if (submitting.value) return;
@@ -123,17 +139,25 @@ const submit = async () => {
     formData.append("name", form.name.trim());
     formData.append("description", form.description.trim());
     formData.append("building", form.building);
-    formData.append("avatar", form.avatarFile);
+    if (form.avatarFile) {
+        formData.append("avatar", form.avatarFile);
+    }
 
-    const { ok, payload } = await createClassroom(formData);
+    // Use POST with ID parameter to trigger UPDATE logic
+    const res = await fetch(`http://localhost:8000/classroom.php?id=${classroomId}`, {
+      method: "POST",
+      body: formData,
+    });
 
-    if (!ok) {
-      if (payload.fields) {
+    const payload = await res.json().catch(() => ({}));
+
+    if (!res.ok || payload.error) {
+       if (payload.fields) {
         Object.keys(payload.fields).forEach((key) => {
           if (errors[key] !== undefined) errors[key] = payload.fields[key];
         });
       }
-      serverError.value = payload.error || "Create classroom failed.";
+      serverError.value = payload.error || "Cập nhật thất bại.";
       submitting.value = false;
       step.value = "input";
       return;
@@ -141,7 +165,8 @@ const submit = async () => {
 
     step.value = "complete";
   } catch (err) {
-    serverError.value = "Cannot reach server.";
+    console.error(err);
+    serverError.value = "Không thể kết nối đến server.";
     step.value = "input";
   } finally {
     submitting.value = false;
@@ -151,37 +176,37 @@ const submit = async () => {
 
 <template>
   <div class="page">
-    <div class="card">
+    <div class="card" v-if="!loading">
       <header class="card__header">
         <div>
-          <p class="eyebrow">Classroom</p>
-          <h1>Create classroom</h1>
+          <p class="eyebrow">Phòng học</p>
+          <h1>Cập nhật: {{ form.name }}</h1>
         </div>
         <div class="step-pill">
-          <span v-if="step === 'input'">Input</span>
-          <span v-else-if="step === 'confirm'">Confirm</span>
-          <span v-else>Complete</span>
+          <span v-if="step === 'input'">Nhập liệu</span>
+          <span v-else-if="step === 'confirm'">Xác nhận</span>
+          <span v-else>Hoàn tất</span>
         </div>
       </header>
 
       <form v-if="step === 'input'" class="form" @submit.prevent="goConfirm">
         <div class="form-grid">
-          <label for="name">Name</label>
+          <label for="name">Tên phòng</label>
           <div>
             <input
               id="name"
               v-model="form.name"
               type="text"
               maxlength="255"
-              placeholder="Enter classroom name"
+              placeholder="Nhập tên phòng học"
             />
             <p v-if="errors.name" class="error">{{ errors.name }}</p>
           </div>
 
-          <label for="building">Building</label>
+          <label for="building">Tòa nhà</label>
           <div>
             <select id="building" v-model="form.building">
-              <option value="" disabled hidden>Select building</option>
+              <option value="" disabled hidden>Chọn tòa nhà</option>
 
               <option v-for="b in BUILDINGS" :key="b" :value="b">
                 {{ b }}
@@ -190,7 +215,7 @@ const submit = async () => {
             <p v-if="errors.building" class="error">{{ errors.building }}</p>
           </div>
 
-          <label for="avatar">Avatar</label>
+          <label for="avatar">Ảnh đại diện</label>
           <div class="file-row">
             <input
               ref="avatarInput"
@@ -203,21 +228,25 @@ const submit = async () => {
             />
 
             <button type="button" class="ghost" @click="triggerFileInput">
-              Browse
+              Chọn ảnh khác
             </button>
             <span v-if="avatarName" class="file-name">{{ avatarName }}</span>
+            <div v-else-if="avatarPreview" class="current-avatar-hint">
+                <img :src="avatarPreview" alt="Current" class="mini-preview" />
+                <span>(Ảnh hiện tại)</span>
+            </div>
             <p v-if="errors.avatarFile" class="error">
               {{ errors.avatarFile }}
             </p>
           </div>
 
-          <label for="description">Description</label>
+          <label for="description">Mô tả</label>
           <div>
             <textarea
               id="description"
               v-model="form.description"
               rows="6"
-              placeholder="Enter description"
+              placeholder="Nhập mô tả chi tiết"
             ></textarea>
             <p v-if="errors.description" class="error">
               {{ errors.description }}
@@ -226,42 +255,44 @@ const submit = async () => {
         </div>
 
         <div class="actions">
-          <button type="submit" class="primary">Confirm</button>
+          <button type="button" class="ghost" @click="goHome">Hủy</button>
+          <button type="submit" class="primary">Tiếp theo</button>
+          
           <p v-if="serverError" class="error">{{ serverError }}</p>
         </div>
       </form>
 
       <div v-else-if="step === 'confirm'" class="confirm">
         <div class="form-grid">
-          <span class="label">Name</span>
+          <span class="label">Tên phòng</span>
           <span class="value">{{ form.name }}</span>
 
-          <span class="label">Building</span>
+          <span class="label">Tòa nhà</span>
           <span class="value">{{ form.building }}</span>
 
-          <span class="label">Avatar</span>
+          <span class="label">Ảnh đại diện</span>
           <div class="avatar-box">
             <img
               v-if="avatarPreview"
               :src="avatarPreview"
               alt="Avatar preview"
             />
-            <span v-else class="avatar-placeholder">IMAGE</span>
+            <span v-else class="avatar-placeholder">KHÔNG CÓ ẢNH</span>
           </div>
 
-          <span class="label">Description</span>
+          <span class="label">Mô tả</span>
           <div class="value description-box">{{ form.description }}</div>
         </div>
 
         <div class="actions">
-          <button type="button" class="ghost" @click="goEdit">Edit</button>
+          <button type="button" class="ghost" @click="goEdit">Sửa lại</button>
           <button
             type="button"
             class="primary"
             :disabled="submitting"
             @click="submit"
           >
-            {{ submitting ? "Working..." : "Create classroom" }}
+            {{ submitting ? "Đang xử lý..." : "Cập nhật" }}
           </button>
           <p v-if="serverError" class="error">{{ serverError }}</p>
         </div>
@@ -269,14 +300,15 @@ const submit = async () => {
 
       <div v-else class="complete">
         <div class="complete__box">
-          <h2>Classroom created</h2>
-          <p>The classroom was created successfully.</p>
+          <h2>Cập nhật thành công</h2>
+          <p>Thông tin phòng học đã được lưu lại.</p>
           <button type="button" class="primary" @click="goHome">
-            Back to home
+            Quay lại danh sách
           </button>
         </div>
       </div>
     </div>
+    <div v-else class="loading">Đang tải...</div>
   </div>
 </template>
 
@@ -290,12 +322,7 @@ const submit = async () => {
   --shadow: 0 24px 60px rgba(30,35,55,0.12);
 }
 
-/* global box-sizing so width calculations are predictable */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 .page {
   min-height: 100vh;
@@ -303,12 +330,10 @@ const submit = async () => {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  background: transparent;
 }
 
-/* card keeps horizontal breathing room on small screens */
 .card {
-  width: min(880px, calc(100% - 40px)); /* ensure 20px margin each side on small screens */
+  width: min(880px, calc(100% - 40px));
   background: #fffdf8;
   border: 1px solid var(--line);
   border-radius: 24px;
@@ -317,7 +342,6 @@ const submit = async () => {
   margin: 0 20px;
 }
 
-/* header */
 .card__header {
   display: flex;
   align-items: center;
@@ -348,17 +372,14 @@ const submit = async () => {
   font-size: 12px;
 }
 
-/* GRID: label column + input column */
 .form-grid {
   display: grid;
-  grid-template-columns: 180px 1fr; /* wider label column for right alignment */
+  grid-template-columns: 180px 1fr;
   gap: 16px 20px;
-  align-items: start; /* align by the top of each row */
+  align-items: start;
 }
 
-/* right-align labels so inputs align to same left edge */
-label,
-.label {
+label, .label {
   font-weight: 600;
   color: var(--muted);
   display: flex;
@@ -368,10 +389,7 @@ label,
   padding-right: 12px;
 }
 
-/* inputs live inside second column; ensure full width and consistent sizing */
-input,
-select,
-textarea {
+input, select, textarea {
   width: 100%;
   border: 1px solid var(--line);
   background: #fff;
@@ -383,36 +401,15 @@ textarea {
   display: block;
 }
 
-/* confirm page uses labels on left, values on right — keep them left aligned */
 .confirm .label { text-align: left; justify-content: flex-start; }
 
-/* textarea tweak */
-textarea {
-  resize: vertical;
-  min-height: 140px;
-}
+textarea { resize: vertical; min-height: 140px; }
 
-/* file row */
 .file-row {
   display: flex;
   align-items: center;
   gap: 12px;
   min-height: 44px;
-}
-.file-hint { font-size: 13px; color: var(--muted); }
-
-/* hide native file input (we trigger it programmatically) */
-input[type="file"] {
-  display: none;
-}
-
-/* file button and name */
-.ghost.file-button {
-  background: transparent;
-  border: 1px solid var(--line);
-  padding: 8px 12px;
-  border-radius: 10px;
-  cursor: pointer;
 }
 .file-name {
   font-size: 14px;
@@ -423,7 +420,16 @@ input[type="file"] {
   white-space: nowrap;
 }
 
-/* avatar preview */
+input[type="file"] { display: none; }
+
+.ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
 .avatar-box {
   width: 120px;
   height: 80px;
@@ -440,22 +446,17 @@ input[type="file"] {
   object-fit: cover;
   border-radius: 6px;
 }
-.avatar-placeholder {
-  color: var(--muted);
-  font-weight: 600;
-}
+.avatar-placeholder { color: var(--muted); font-weight: 600; }
 
-/* values area */
 .value { align-self: center; }
 .description-box { white-space: pre-wrap; }
 
-/* actions centered, buttons grouped nicely */
 .actions {
   margin-top: 18px;
   display: flex;
   gap: 12px;
   align-items: center;
-  justify-content: center; /* center horizontally */
+  justify-content: center;
   flex-wrap: wrap;
 }
 .primary {
@@ -466,27 +467,31 @@ input[type="file"] {
   border-radius: 10px;
   cursor: pointer;
 }
-.ghost {
-  background: transparent;
-  border: 1px solid var(--line);
-  padding: 8px 12px;
-  border-radius: 10px;
-  cursor: pointer;
-}
 .primary:disabled { opacity: 0.6; cursor: default; }
 
-/* error styling */
 .error {
   color: #c44;
   margin-top: 6px;
   font-size: 13px;
 }
-/* make errors inside actions span full width and center */
 .actions .error { width: 100%; text-align: center; margin-top: 8px; }
 
 .complete__box { text-align: center; }
 
-/* smaller screens: stack labels above controls but keep horizontal padding */
+.mini-preview {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+.current-avatar-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
 @media (max-width: 640px) {
   .form-grid { grid-template-columns: 1fr; }
   label, .label { justify-content: flex-start; text-align: left; padding-right: 0; margin-bottom: 6px; }

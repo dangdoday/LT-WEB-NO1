@@ -53,7 +53,7 @@
             <button class="btn-delete" @click="deleteRoom(room.id, room.name)">
               Xóa
             </button>
-            <button class="btn-edit">Sửa</button>
+            <button class="btn-edit" @click="goToEdit(room.id)">Sửa</button>
           </td>
         </tr>
         <tr v-if="classrooms.length === 0">

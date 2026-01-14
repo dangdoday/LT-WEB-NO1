@@ -65,24 +65,40 @@ const validate = () => {
   let ok = true;
 
   if (!form.device_id) {
-    errors.device_id = "Hay chon thiet bi.";
+    errors.device_id = "Hãy chọn thiết bị.";
     ok = false;
   }
   if (!form.teacher_id) {
-    errors.teacher_id = "Hay chon giao vien.";
+    errors.teacher_id = "Hãy chọn giáo viên.";
     ok = false;
   }
   if (!form.classroom_id) {
-    errors.classroom_id = "Hay chon lop hoc.";
+    errors.classroom_id = "Hãy chọn lớp học.";
     ok = false;
   }
   if (!form.start_transaction_plan) {
-    errors.start_transaction_plan = "Hay chon thoi gian bat dau.";
+    errors.start_transaction_plan = "Hãy chọn thời gian bắt đầu.";
     ok = false;
+  } else {
+    // Kiểm tra ngày bắt đầu phải lớn hơn hôm nay
+    const now = new Date();
+    const startDate = new Date(form.start_transaction_plan);
+    if (startDate <= now) {
+      errors.start_transaction_plan = "Thời gian bắt đầu phải lớn hơn hiện tại.";
+      ok = false;
+    }
   }
   if (!form.end_transaction_plan) {
-    errors.end_transaction_plan = "Hay chon thoi gian ket thuc.";
+    errors.end_transaction_plan = "Hãy chọn thời gian kết thúc.";
     ok = false;
+  } else if (form.start_transaction_plan) {
+    // Kiểm tra ngày kết thúc phải lớn hơn ngày bắt đầu
+    const startDate = new Date(form.start_transaction_plan);
+    const endDate = new Date(form.end_transaction_plan);
+    if (endDate <= startDate) {
+      errors.end_transaction_plan = "Thời gian kết thúc phải lớn hơn thời gian bắt đầu.";
+      ok = false;
+    }
   }
 
   return ok;
@@ -131,14 +147,14 @@ const submit = async () => {
           }
         });
       }
-      serverError.value = payload.error || "Tao phieu muon that bai.";
+      serverError.value = payload.error || "Tạo phiếu mượn thất bại.";
       step.value = "input";
       return;
     }
 
     step.value = "complete";
   } catch (error) {
-    serverError.value = "Khong the ket noi toi may chu.";
+    serverError.value = "Không thể kết nối tới máy chủ.";
     step.value = "input";
   } finally {
     submitting.value = false;
@@ -163,7 +179,7 @@ onMounted(async () => {
       form.device_id = queryDeviceId;
     }
   } catch (error) {
-    loadError.value = "Khong tai duoc du lieu. Vui long thu lai.";
+    loadError.value = "Không tải được dữ liệu. Vui lòng thử lại.";
   } finally {
     loading.value = false;
   }
@@ -176,7 +192,7 @@ onMounted(async () => {
       <header class="card__header">
         <div>
           <p class="eyebrow">Borrow device</p>
-          <h1>Muon thiet bi</h1>
+          <h1>Mượn thiết bị</h1>
         </div>
         <div class="step-pill">
           <span v-if="step === 'input'">Input</span>
@@ -185,7 +201,7 @@ onMounted(async () => {
         </div>
       </header>
 
-      <div v-if="loading" class="loading">Dang tai du lieu...</div>
+      <div v-if="loading" class="loading">Đang tải dữ liệu...</div>
       <div v-else-if="loadError" class="error">{{ loadError }}</div>
 
       <form
@@ -194,10 +210,22 @@ onMounted(async () => {
         @submit.prevent="goConfirm"
       >
         <div class="form-grid">
-          <label for="teacher">Giao vien</label>
+          <label for="device">Thiết bị</label>
+          <div>
+            <input
+              id="device"
+              type="text"
+              :value="selectedDevice?.name || ''"
+              placeholder="Thiết bị"
+              readonly
+            />
+            <p v-if="errors.device_id" class="error">{{ errors.device_id }}</p>
+          </div>
+
+          <label for="teacher">Giáo viên</label>
           <div>
             <select id="teacher" v-model="form.teacher_id">
-              <option disabled value="">Chon giao vien</option>
+              <option disabled value="">Chọn giáo viên</option>
               <option
                 v-for="item in options.teachers"
                 :key="item.id"
@@ -211,25 +239,10 @@ onMounted(async () => {
             </p>
           </div>
 
-          <label for="device">Thiet bi</label>
-          <div>
-            <select id="device" v-model="form.device_id">
-              <option disabled value="">Chon thiet bi</option>
-              <option
-                v-for="item in options.devices"
-                :key="item.id"
-                :value="item.id"
-              >
-                {{ item.name }}
-              </option>
-            </select>
-            <p v-if="errors.device_id" class="error">{{ errors.device_id }}</p>
-          </div>
-
-          <label for="classroom">Lop hoc</label>
+          <label for="classroom">Lớp học</label>
           <div>
             <select id="classroom" v-model="form.classroom_id">
-              <option disabled value="">Chon lop hoc</option>
+              <option disabled value="">Chọn lớp học</option>
               <option
                 v-for="item in options.classrooms"
                 :key="item.id"
@@ -243,7 +256,7 @@ onMounted(async () => {
             </p>
           </div>
 
-          <label for="start">Bat dau</label>
+          <label for="start">Bắt đầu</label>
           <div>
             <input
               id="start"
@@ -255,7 +268,7 @@ onMounted(async () => {
             </p>
           </div>
 
-          <label for="end">Ket thuc</label>
+          <label for="end">Kết thúc</label>
           <div>
             <input
               id="end"
@@ -267,51 +280,53 @@ onMounted(async () => {
             </p>
           </div>
 
-          <label for="comment">Ghi chu</label>
-          <textarea
-            id="comment"
-            v-model="form.comment"
-            rows="4"
-            placeholder="Mo ta them (neu co)"
-          ></textarea>
+          <label for="comment">Ghi chú</label>
+          <div>
+            <textarea
+              id="comment"
+              v-model="form.comment"
+              rows="4"
+              placeholder="Mô tả thêm (nếu có)"
+            ></textarea>
+          </div>
         </div>
 
         <div class="actions">
-          <button type="submit" class="primary">Xac nhan</button>
+          <button type="submit" class="primary">Xác nhận</button>
           <p v-if="serverError" class="error">{{ serverError }}</p>
         </div>
       </form>
 
       <div v-else-if="step === 'confirm'" class="confirm">
         <div class="form-grid">
-          <span class="label">Giao vien</span>
+          <span class="label">Giáo viên</span>
           <span class="value">{{ selectedTeacher?.name || "-" }}</span>
 
-          <span class="label">Thiet bi</span>
+          <span class="label">Thiết bị</span>
           <span class="value">{{ selectedDevice?.name || "-" }}</span>
 
-          <span class="label">Lop hoc</span>
+          <span class="label">Lớp học</span>
           <span class="value">{{ selectedClassroom?.name || "-" }}</span>
 
-          <span class="label">Bat dau</span>
+          <span class="label">Bắt đầu</span>
           <span class="value">{{ form.start_transaction_plan }}</span>
 
-          <span class="label">Ket thuc</span>
+          <span class="label">Kết thúc</span>
           <span class="value">{{ form.end_transaction_plan }}</span>
 
-          <span class="label">Ghi chu</span>
+          <span class="label">Ghi chú</span>
           <div class="value description-box">{{ form.comment || "-" }}</div>
         </div>
 
         <div class="actions">
-          <button type="button" class="ghost" @click="goEdit">Sua lai</button>
+          <button type="button" class="ghost" @click="goEdit">Sửa lại</button>
           <button
             type="button"
             class="primary"
             :disabled="submitting"
             @click="submit"
           >
-            {{ submitting ? "Dang gui..." : "Dang ky muon" }}
+            {{ submitting ? "Đang gửi..." : "Đăng ký mượn" }}
           </button>
           <p v-if="serverError" class="error">{{ serverError }}</p>
         </div>
@@ -319,10 +334,10 @@ onMounted(async () => {
 
       <div v-else class="complete">
         <div class="complete__box">
-          <h2>Dang ky muon thanh cong</h2>
-          <p>Yeu cau muon thiet bi da duoc ghi nhan.</p>
+          <h2>Đăng ký mượn thành công</h2>
+          <p>Yêu cầu mượn thiết bị đã được ghi nhận.</p>
           <button type="button" class="primary" @click="goHome">
-            Tro ve trang chu
+            Trở về trang chủ
           </button>
         </div>
       </div>
@@ -420,17 +435,70 @@ input,
 select,
 textarea {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   border: 1px solid var(--line);
   background: #fff;
   border-radius: 12px;
   padding: 12px 14px;
   font-size: 15px;
   font-family: inherit;
+  line-height: 1.5;
+  transition: border-color 0.2s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+select {
+  height: 44px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%235b6475' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding: 2px 14px;
+  padding-right: 40px;
+}
+
+select option {
+  padding: 12px 8px;
+}
+
+::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+input[readonly] {
+  background-color: #f9fafb;
+  cursor: not-allowed;
+  color: var(--ink);
+}
+
+input[type="datetime-local"] {
+  height: 44px;
+  cursor: pointer;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
 }
 
 textarea {
   resize: vertical;
   min-height: 120px;
+  padding: 12px 14px;
 }
 
 .actions {
@@ -523,12 +591,36 @@ button:disabled {
   }
 
   .card {
-    padding: 24px;
+    padding: 20px;
   }
 
   .card__header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .card__header h1 {
+    font-size: 24px;
+  }
+
+  input,
+  select,
+  textarea {
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  select option {
+    font-size: 16px;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  button {
+    width: 100%;
   }
 }
 </style>

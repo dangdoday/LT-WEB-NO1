@@ -1,72 +1,85 @@
 <script setup>
 import { onMounted, reactive, ref } from "vue";
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 
 const router = useRouter();
 const loading = ref(false);
 const rows = ref([]);
-const serverError = ref('');
+const serverError = ref("");
+const returningId = ref("");
 
 const apiBase = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 const filters = reactive({
   device_name: "",
   teacher_id: "",
+  classroom_id: "",
 });
 
 const options = reactive({
-  teachers: []
+  teachers: [],
+  classrooms: [],
 });
-
-const formatDateTime = (value) => {
-  if (!value) return '';
-
-  let datePart, timePart;
-
-  if (value.includes('T')) {
-    [datePart, timePart] = value.split('T');
-  }
-  else {
-    [datePart, timePart] = value.split(' ');
-  }
-
-  const [year, month, day] = datePart.split('-');
-  const [hour, minute] = timePart.split(':');
-
-  return `${hour}:${minute} ${parseInt(day)}/${parseInt(month)}/${year}`;
-};
-
 
 const loadFilters = async () => {
   try {
-    const res = await fetch(`${apiBase}/transaction_filters.php`);
+    const res = await fetch(`${apiBase}/return_filters.php`);
     const data = await res.json();
     options.teachers = data.teachers || [];
-  } catch (e) {
-    console.error("Lỗi tải bộ lọc");
+    options.classrooms = data.classrooms || [];
+  } catch {
+    serverError.value = "Khong the tai du lieu bo loc.";
   }
 };
 
 const search = async () => {
   loading.value = true;
-  serverError.value = '';
+  serverError.value = "";
   try {
     const query = new URLSearchParams(filters).toString();
-    const res = await fetch(`${apiBase}/transactions.php?${query}`);
+    const res = await fetch(`${apiBase}/return_device_list.php?${query}`);
     const result = await res.json();
     if (result.status === "success") {
       rows.value = result.data || [];
+    } else {
+      serverError.value = result.error || "Khong the tai danh sach thiet bi.";
     }
-  } catch (e) {
-    serverError.value = "Không thể kết nối tới server";
+  } catch {
+    serverError.value = "Khong the ket noi toi server.";
   } finally {
     loading.value = false;
   }
 };
 
-onMounted(() => {
-  loadFilters();
-  search();
+const returnDevice = async (row) => {
+  if (returningId.value) return;
+  const ok = window.confirm(`Ban co muon tra ${row.device_name}?`);
+  if (!ok) return;
+
+  returningId.value = String(row.device_id);
+  serverError.value = "";
+  try {
+    const res = await fetch(`${apiBase}/return_device.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device_id: row.device_id }),
+    });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok || result.error) {
+      serverError.value = result.error || "Tra thiet bi that bai.";
+      return;
+    }
+    await search();
+  } catch {
+    serverError.value = "Khong the ket noi toi server.";
+  } finally {
+    returningId.value = "";
+  }
+};
+
+onMounted(async () => {
+  await loadFilters();
+  await search();
 });
 </script>
 
@@ -75,37 +88,45 @@ onMounted(() => {
     <div class="card">
       <header class="card__header">
         <div>
-          <p class="eyebrow">Transaction</p>
-          <h1>Lịch sử mượn thiết bị</h1>
+          <p class="eyebrow">Return device</p>
+          <h1>Tra thiet bi</h1>
         </div>
         <div class="step-pill">Input</div>
       </header>
 
-      <div v-if="loading" class="loading">Đang tải dữ liệu...</div>
+      <div v-if="loading" class="loading">Dang tai du lieu...</div>
       <div v-else-if="serverError" class="error">{{ serverError }}</div>
 
       <div v-else>
         <div class="form-grid search-grid">
-          <label>Thiết bị</label>
-          <input v-model="filters.device_name" type="text" placeholder="Nhập tên thiết bị" />
+          <label>Thiet bi</label>
+          <input v-model="filters.device_name" type="text" placeholder="Nhap ten thiet bi" />
 
-          <label>Giáo viên</label>
+          <label>Giao vien</label>
           <select v-model="filters.teacher_id">
-            <option value="">Chọn giáo viên</option>
+            <option value="">Chon giao vien</option>
             <option v-for="t in options.teachers" :key="t.id" :value="t.id">
               {{ t.name }}
+            </option>
+          </select>
+
+          <label>Lop hoc</label>
+          <select v-model="filters.classroom_id">
+            <option value="">Chon lop hoc</option>
+            <option v-for="c in options.classrooms" :key="c.id" :value="c.id">
+              {{ c.name }}
             </option>
           </select>
         </div>
 
         <div class="actions">
           <button class="primary" @click="search" :disabled="loading">
-            {{ loading ? '...' : 'Tìm kiếm' }}
+            {{ loading ? "..." : "Tim kiem" }}
           </button>
         </div>
 
         <div class="result-summary">
-          Số lần thiết bị tìm thấy: {{ rows.length }}
+          So thiet bi tim thay: {{ rows.length }}
         </div>
 
         <div class="table-wrapper">
@@ -113,34 +134,37 @@ onMounted(() => {
             <thead>
               <tr>
                 <th>No</th>
-                <th>Tên Thiết bị</th>
-                <th>Thời gian dự kiến mượn</th>
-                <th>Thời điểm trả</th>
-                <th>Giáo viên mượn</th>
+                <th>Ten thiet bi</th>
+                <th>Trang thai</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(row, index) in rows" :key="index">
+              <tr v-for="(row, index) in rows" :key="row.device_id">
                 <td>{{ index + 1 }}</td>
                 <td>{{ row.device_name }}</td>
+                <td>{{ row.status_label }}</td>
                 <td>
-                  {{ formatDateTime(row.start_transaction_plan) }} ~
-                  {{ formatDateTime(row.end_transaction_plan) }}
+                  <button
+                    v-if="row.can_return"
+                    class="primary small"
+                    :disabled="returningId === String(row.device_id)"
+                    @click="returnDevice(row)"
+                  >
+                    {{ returningId === String(row.device_id) ? "..." : "Tra" }}
+                  </button>
+                  <span v-else class="muted">-</span>
                 </td>
-                <td>
-                  {{ row.actual_return_time ? formatDateTime(row.actual_return_time) : 'Chưa trả' }}
-                </td>
-                <td>{{ row.teacher_name }}</td>
               </tr>
               <tr v-if="rows.length === 0">
-                <td colspan="5" class="empty">Không tìm thấy dữ liệu</td>
+                <td colspan="4" class="empty">Khong tim thay du lieu</td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <div class="actions">
-          <button class="ghost" @click="router.push('/')">Trở về trang chủ</button>
+          <button class="ghost" @click="router.push('/')">Tro ve trang chu</button>
         </div>
       </div>
     </div>
@@ -219,11 +243,9 @@ select {
   width: 100%;
   border: 1px solid #cdd7e5;
   border-radius: 12px;
-  padding: 12px 16px;
-  /* chỉnh để input bằng select */
+  padding: 12px 14px;
   font-size: 15px;
   background: #fff;
-  box-sizing: border-box;
 }
 
 .actions {
@@ -247,6 +269,11 @@ button.primary {
   background: #2e6db4;
   color: white;
   box-shadow: 0 10px 20px rgba(46, 109, 180, 0.2);
+}
+
+button.primary.small {
+  padding: 8px 18px;
+  font-size: 14px;
 }
 
 button.ghost {
@@ -288,19 +315,23 @@ button:disabled {
   font-weight: 600;
 }
 
-.mockup-table th:first-child,
-.mockup-table td:first-child {
-  text-align: center;
-  width: 60px;
-}
-
 .empty {
   text-align: center;
+  color: #999;
+}
+
+.muted {
   color: #999;
 }
 
 .loading {
   padding: 16px 0 8px;
   color: #5b6475;
+}
+
+@media (max-width: 720px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

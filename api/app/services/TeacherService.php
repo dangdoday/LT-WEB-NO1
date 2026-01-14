@@ -1,11 +1,11 @@
 <?php
-require_once __DIR__ . '/../models/Classroom.php';
+require_once __DIR__ . '/../models/Teacher.php';
 
-class ClassroomService
+class TeacherService
 {
     /**
-     * Create a classroom record and save uploaded avatar.
-     * @param array $data ['name','description','building']
+     * Create a teacher record and save uploaded avatar.
+     * @param array $data ['name','specialized','degree','description']
      * @param array $file $_FILES['avatar']
      * @return array ['id'=>int,'avatar'=>string]
      * @throws Exception on failure
@@ -39,7 +39,7 @@ class ClassroomService
             throw new RuntimeException('Invalid file type');
         }
 
-        $uploadDir = __DIR__ . '/../../web/image/classroom';
+        $uploadDir = __DIR__ . '/../../web/image/avatar';
         if (!is_dir($uploadDir)) {
             if (!mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
                 throw new RuntimeException('Unable to create upload dir');
@@ -47,33 +47,34 @@ class ClassroomService
         }
 
         // upload file
-        $filename = 'classroom_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $allowed[$mime];
+        $filename = 'teacher_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $allowed[$mime];
         $targetPath = $uploadDir . '/' . $filename;
 
         if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
             throw new RuntimeException('Failed to move uploaded file');
         }
 
-        // store classroom record
-        $relativePath = 'web/image/classroom/' . $filename;
+        // store teacher record
+        $relativePath = 'web/image/avatar/' . $filename;
 
-        $id = Classroom::create([
+        $id = Teacher::create([
             'name' => $data['name'] ?? null,
-            'avatar' => $relativePath,
+            'specialized' => $data['specialized'] ?? null,
+            'degree' => $data['degree'] ?? null,
             'description' => $data['description'] ?? null,
-            'building' => $data['building'] ?? null,
-
+            'avatar' => $relativePath,
         ]);
 
-        return ['id' => $id, 'avatar' => $relativePath, "description" => $data['description'], "building" => $data['building']];
+        return ['id' => $id, 'avatar' => $relativePath, 'specialized' => $data['specialized'], 'degree' => $data['degree'], 'description' => $data['description']];
     }
 
     public function update($id, array $data, array $file = null)
     {
         $updateData = [
             'name' => $data['name'] ?? null,
+            'specialized' => $data['specialized'] ?? null,
+            'degree' => $data['degree'] ?? null,
             'description' => $data['description'] ?? null,
-            'building' => $data['building'] ?? null,
         ];
 
         // Handle file upload if exists
@@ -101,25 +102,25 @@ class ClassroomService
                 throw new RuntimeException('Invalid file type');
             }
 
-            $uploadDir = __DIR__ . '/../../web/image/classroom';
+            $uploadDir = __DIR__ . '/../../web/image/avatar';
              if (!is_dir($uploadDir)) {
                 if (!mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
                     throw new RuntimeException('Unable to create upload dir');
                 }
             }
 
-            $filename = 'classroom_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $allowed[$mime];
+            $filename = 'teacher_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $allowed[$mime];
             $targetPath = $uploadDir . '/' . $filename;
 
             if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
                 throw new RuntimeException('Failed to move uploaded file');
             }
 
-            $updateData['avatar'] = 'web/image/classroom/' . $filename;
+            $updateData['avatar'] = 'web/image/avatar/' . $filename;
             
             // TODO: Ideally delete old avatar here but skipping for simplicity
         }
 
-        return Classroom::update($id, $updateData);
+        return Teacher::updateWithAvatar($id, $updateData);
     }
 }
