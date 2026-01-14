@@ -49,7 +49,7 @@
             <button class="btn-delete" @click="deleteRoom(room.id, room.name)">
               Xóa
             </button>
-            <button class="btn-edit">Sửa</button>
+            <button class="btn-edit" @click="goToEdit(room.id)">Sửa</button>
           </td>
         </tr>
         <tr v-if="classrooms.length === 0">
@@ -125,6 +125,14 @@ const deleteRoom = async (id, name) => {
     alert("Lỗi kết nối khi xóa");
     console.error(error);
   }
+};
+
+// HÀM: Chuyển hướng sang trang sửa
+import { useRouter } from 'vue-router';
+const router = useRouter();
+
+const goToEdit = (id) => {
+  router.push(`/classroom/edit/${id}`);
 };
 
 // Tự động chạy khi vào trang

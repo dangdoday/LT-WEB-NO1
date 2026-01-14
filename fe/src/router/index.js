@@ -15,6 +15,7 @@ import DeviceUpdate from '../pages/DeviceUpdate.vue'
 import ReturnDevice from '../pages/ReturnDevice.vue'
 import RequestReset from '../pages/RequestReset.vue'
 import ResetPassword from '../pages/ResetPassword.vue'
+import ClassroomEdit from '../pages/ClassroomEdit.vue'
 
 const routes = [
   { path: '/', name: 'home', component: Home },
@@ -33,6 +34,7 @@ const routes = [
   { path: '/devices/update', name: 'device-update', component: DeviceUpdate },
   { path: '/reset-password-request', name: 'reset-password-request', component: RequestReset },
   { path: '/reset-password', name: 'reset-password', component: ResetPassword },
+  { path: '/classroom/edit/:id', name: 'classroom-edit', component: ClassroomEdit },
 ]
 
 const router = createRouter({

@@ -11,7 +11,7 @@ class Classroom
     public static function findById($id)
     {
         $pdo = get_db_connection();
-        $stmt = $pdo->prepare('SELECT id, name FROM classrooms WHERE id = :id LIMIT 1');
+        $stmt = $pdo->prepare('SELECT * FROM classrooms WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
         return $stmt->fetch();
     }
@@ -27,6 +27,40 @@ class Classroom
             'building' => $data['building'] ?? null,
         ]);
         return $pdo->lastInsertId();
+    }
+
+    public static function update($id, $data)
+    {
+        $pdo = get_db_connection();
+        $fields = [];
+        $params = ['id' => $id];
+
+        if (isset($data['name'])) {
+            $fields[] = 'name = :name';
+            $params['name'] = $data['name'];
+        }
+        if (isset($data['avatar'])) {
+            $fields[] = 'avatar = :avatar';
+            $params['avatar'] = $data['avatar'];
+        }
+        if (isset($data['description'])) {
+            $fields[] = 'description = :description';
+            $params['description'] = $data['description'];
+        }
+        if (isset($data['building'])) {
+            $fields[] = 'building = :building';
+            $params['building'] = $data['building'];
+        }
+
+        $fields[] = 'updated = CURRENT_TIMESTAMP';
+
+        if (empty($fields)) {
+            return false;
+        }
+
+        $sql = 'UPDATE classrooms SET ' . implode(', ', $fields) . ' WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        return $stmt->execute($params);
     }
 
     public static function search($building = '', $keyword = '')

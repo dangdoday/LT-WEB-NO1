@@ -20,6 +20,12 @@ if ($method === 'GET') {
     $controller->index();
 } elseif ($method === 'DELETE') {
     $controller->delete();
+} elseif ($method === 'POST') {
+    if (isset($_GET['id'])) {
+        $controller->update();
+    } else {
+        $controller->create();
+    }
 } else {
     jsonResponse(['error' => 'Method not allowed'], 405);
 }
