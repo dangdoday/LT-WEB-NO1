@@ -105,8 +105,13 @@ const goLogin = () => {
           <button type="submit" class="primary" :disabled="submitting">
             {{ submitting ? 'Đang gửi...' : 'Gửi yêu cầu reset password' }}
           </button>
-          <p v-if="serverError" class="error">{{ serverError }}</p>
+
+          <button type="button" class="back" @click="goLogin">
+            Quay về login
+          </button>
         </div>
+
+        <p v-if="serverError" class="error">{{ serverError }}</p>
       </form>
 
       <div v-else class="complete">
@@ -175,15 +180,16 @@ label {
 }
 
 input {
-  width: 100%;
+  width: 500px;        /* 👈 cố định chiều rộng input */
+  max-width: 100%;     /* 👈 chống vỡ mobile */
   border: 1px solid #cdd7e5;
   background: #fff;
   border-radius: 12px;
   padding: 12px 14px;
   font-size: 15px;
   font-family: inherit;
-  margin-left: 6px;
 }
+
 
 .actions {
   margin-top: 28px;
@@ -249,4 +255,30 @@ button:disabled {
     padding: 24px;
   }
 }
+.actions {
+  margin-top: 28px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+/* nút chính giữ nguyên */
+button.primary {
+  background: #2e6db4;
+  color: white;
+  box-shadow: 0 10px 20px rgba(46, 109, 180, 0.2);
+}
+
+/* nút back */
+button.back {
+  background: transparent;
+  color: #2e6db4;
+  border: 1px solid #cdd7e5;
+}
+
+/* hover nhẹ */
+button.back:hover {
+  background: #f3f6fb;
+}
+
 </style>
