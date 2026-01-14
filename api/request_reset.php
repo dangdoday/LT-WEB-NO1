@@ -26,16 +26,16 @@ $loginId = trim($input['login_id'] ?? '');
 $errors = [];
 
 if ($loginId === '') {
-    $errors['login_id'] = 'Hay nhap login id';
+    $errors['login_id'] = 'Hãy nhập login id';
 } elseif (strlen($loginId) < 4) {
-    $errors['login_id'] = 'Hay nhap login id toi thieu 4 ky tu';
+    $errors['login_id'] = 'Hãy nhập login id tối thiếu 4 kí tự';
 }
 
 $admin = null;
 if (empty($errors)) {
     $admin = Admin::findByLoginId($loginId);
     if (!$admin) {
-        $errors['login_id'] = 'Login id khong ton tai trong he thong';
+        $errors['login_id'] = 'Login id không tồn tại trong hệ thống';
     }
 }
 
