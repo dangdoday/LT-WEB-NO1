@@ -28,7 +28,7 @@ const loadFilters = async () => {
     options.teachers = data.teachers || [];
     options.classrooms = data.classrooms || [];
   } catch {
-    serverError.value = "Khong the tai du lieu bo loc.";
+    serverError.value = "Không thể tải dữ liệu bộ lọc.";
   }
 };
 
@@ -42,10 +42,10 @@ const search = async () => {
     if (result.status === "success") {
       rows.value = result.data || [];
     } else {
-      serverError.value = result.error || "Khong the tai danh sach thiet bi.";
+      serverError.value = result.error || "Không thể tải danh sách thiết bị.";
     }
   } catch {
-    serverError.value = "Khong the ket noi toi server.";
+    serverError.value = "Không thể kết nối tới server.";
   } finally {
     loading.value = false;
   }
@@ -53,7 +53,7 @@ const search = async () => {
 
 const returnDevice = async (row) => {
   if (returningId.value) return;
-  const ok = window.confirm(`Ban co muon tra ${row.device_name}?`);
+  const ok = window.confirm(`Bạn có muốn trả ${row.device_name}?`);
   if (!ok) return;
 
   returningId.value = String(row.device_id);
@@ -66,12 +66,12 @@ const returnDevice = async (row) => {
     });
     const result = await res.json().catch(() => ({}));
     if (!res.ok || result.error) {
-      serverError.value = result.error || "Tra thiet bi that bai.";
+      serverError.value = result.error || "Trả thiết bị thất bại.";
       return;
     }
     await search();
   } catch {
-    serverError.value = "Khong the ket noi toi server.";
+    serverError.value = "Không thể kết nối tới server.";
   } finally {
     returningId.value = "";
   }
@@ -89,30 +89,40 @@ onMounted(async () => {
       <header class="card__header">
         <div>
           <p class="eyebrow">Return device</p>
-          <h1>Tra thiet bi</h1>
+          <h1>Trả thiết bị</h1>
         </div>
-        <div class="step-pill">Input</div>
       </header>
 
-      <div v-if="loading" class="loading">Dang tai du lieu...</div>
+      <div v-if="loading" class="loading">Đang tải dữ liệu...</div>
       <div v-else-if="serverError" class="error">{{ serverError }}</div>
 
       <div v-else>
         <div class="form-grid search-grid">
-          <label>Thiet bi</label>
-          <input v-model="filters.device_name" type="text" placeholder="Nhap ten thiet bi" />
+          <label>Thiết bị</label>
+          <input 
+            v-model="filters.device_name" 
+            type="text" 
+            placeholder="Nhập tên thiết bị" 
+            style="width: 100%; max-width: 400px;" 
+          />
 
-          <label>Giao vien</label>
-          <select v-model="filters.teacher_id">
-            <option value="">Chon giao vien</option>
+          <label>Giáo viên</label>
+          <select 
+            v-model="filters.teacher_id"
+            style="width: 100%; max-width: 400px;"
+          >
+            <option value="">Chọn giáo viên</option>
             <option v-for="t in options.teachers" :key="t.id" :value="t.id">
               {{ t.name }}
             </option>
           </select>
 
-          <label>Lop hoc</label>
-          <select v-model="filters.classroom_id">
-            <option value="">Chon lop hoc</option>
+          <label>Lớp học</label>
+          <select 
+            v-model="filters.classroom_id"
+            style="width: 100%; max-width: 400px;"
+          >
+            <option value="">Chọn lớp học</option>
             <option v-for="c in options.classrooms" :key="c.id" :value="c.id">
               {{ c.name }}
             </option>
@@ -121,22 +131,22 @@ onMounted(async () => {
 
         <div class="actions">
           <button class="primary" @click="search" :disabled="loading">
-            {{ loading ? "..." : "Tim kiem" }}
+            {{ loading ? "..." : "Tìm kiếm" }}
           </button>
         </div>
 
         <div class="result-summary">
-          So thiet bi tim thay: {{ rows.length }}
+          Số thiết bị tìm thấy: {{ rows.length }}
         </div>
 
         <div class="table-wrapper">
           <table class="mockup-table">
             <thead>
               <tr>
-                <th>No</th>
-                <th>Ten thiet bi</th>
-                <th>Trang thai</th>
-                <th>Action</th>
+                <th>STT</th>
+                <th>Tên thiết bị</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -151,20 +161,20 @@ onMounted(async () => {
                     :disabled="returningId === String(row.device_id)"
                     @click="returnDevice(row)"
                   >
-                    {{ returningId === String(row.device_id) ? "..." : "Tra" }}
+                    {{ returningId === String(row.device_id) ? "..." : "Trả" }}
                   </button>
                   <span v-else class="muted">-</span>
                 </td>
               </tr>
               <tr v-if="rows.length === 0">
-                <td colspan="4" class="empty">Khong tim thay du lieu</td>
+                <td colspan="4" class="empty">Không tìm thấy dữ liệu</td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <div class="actions">
-          <button class="ghost" @click="router.push('/')">Tro ve trang chu</button>
+          <button class="ghost" @click="router.push('/')">Trở về trang chủ</button>
         </div>
       </div>
     </div>
@@ -214,38 +224,27 @@ onMounted(async () => {
   margin: 0;
 }
 
-.step-pill {
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: rgba(46, 109, 180, 0.12);
-  color: #2e6db4;
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 12px;
-  letter-spacing: 0.1em;
-}
-
 .form-grid {
   display: grid;
-  grid-template-columns: 160px 1fr;
+  grid-template-columns: 160px 1fr; 
   gap: 16px 20px;
   margin-bottom: 20px;
+  align-items: center;
 }
 
 .search-grid label {
   font-weight: 600;
   color: #5b6475;
-  align-self: center;
 }
 
 input,
 select {
-  width: 100%;
   border: 1px solid #cdd7e5;
   border-radius: 12px;
   padding: 12px 14px;
   font-size: 15px;
   background: #fff;
+  box-sizing: border-box;
 }
 
 .actions {
@@ -335,5 +334,3 @@ button:disabled {
   }
 }
 </style>
-
-
