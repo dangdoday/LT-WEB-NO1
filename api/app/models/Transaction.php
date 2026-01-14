@@ -36,7 +36,7 @@ class Transaction
                    d.name as device_name, 
                    t.start_transaction_plan, 
                    t.end_transaction_plan, 
-                   t.created_at as actual_return_time, 
+                   t.returned_date as actual_return_time,
                    te.name as teacher_name 
             FROM transactions t
             JOIN devices d ON t.device_id = d.id

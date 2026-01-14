@@ -18,9 +18,28 @@ const options = reactive({
   teachers: []
 });
 
+const formatDateTime = (value) => {
+  if (!value) return '';
+
+  let datePart, timePart;
+
+  if (value.includes('T')) {
+    [datePart, timePart] = value.split('T');
+  }
+  else {
+    [datePart, timePart] = value.split(' ');
+  }
+
+  const [year, month, day] = datePart.split('-');
+  const [hour, minute] = timePart.split(':');
+
+  return `${hour}:${minute} ${parseInt(day)}/${parseInt(month)}/${year}`;
+};
+
+
 const loadFilters = async () => {
   try {
-    const res = await fetch(`${apiBase}/transaction_filters.php`); 
+    const res = await fetch(`${apiBase}/transaction_filters.php`);
     const data = await res.json();
     options.teachers = data.teachers || [];
   } catch (e) {
@@ -104,8 +123,13 @@ onMounted(() => {
               <tr v-for="(row, index) in rows" :key="index">
                 <td>{{ index + 1 }}</td>
                 <td>{{ row.device_name }}</td>
-                <td>{{ row.start_transaction_plan }} ~ {{ row.end_transaction_plan }}</td>
-                <td>{{ row.actual_return_time || 'Chưa trả' }}</td>
+                <td>
+                  {{ formatDateTime(row.start_transaction_plan) }} ~
+                  {{ formatDateTime(row.end_transaction_plan) }}
+                </td>
+                <td>
+                  {{ row.actual_return_time ? formatDateTime(row.actual_return_time) : 'Chưa trả' }}
+                </td>
                 <td>{{ row.teacher_name }}</td>
               </tr>
               <tr v-if="rows.length === 0">
@@ -195,7 +219,8 @@ select {
   width: 100%;
   border: 1px solid #cdd7e5;
   border-radius: 12px;
-  padding: 12px 16px; /* chỉnh để input bằng select */
+  padding: 12px 16px;
+  /* chỉnh để input bằng select */
   font-size: 15px;
   background: #fff;
   box-sizing: border-box;
