@@ -94,8 +94,18 @@ class TeacherController
             return;
         }
         try {
+            // Lấy thông tin giáo viên trước khi xóa để lấy tên file avatar
+            $teacher = Teacher::findById($id);
+            
             $result = Teacher::deleteById($id);
             if ($result) {
+                // Xóa file avatar nếu có
+                if ($teacher && !empty($teacher['avatar'])) {
+                    $avatarPath = __DIR__ . '/../../web/image/avatar/' . $teacher['avatar'];
+                    if (file_exists($avatarPath)) {
+                        unlink($avatarPath);
+                    }
+                }
                 jsonResponse(['success' => true]);
             } else {
                 jsonResponse(['error' => 'Không thể xoá giáo viên. Có thể giáo viên này đã từng mượn thiết bị hoặc có dữ liệu liên quan.'], 409);
