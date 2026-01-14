@@ -118,4 +118,23 @@ class Teacher
             'degree' => $data['degree'] ?? '',
         ]);
     }
+
+    public static function create(array $data)
+    {
+        $pdo = get_db_connection();
+        $stmt = $pdo->prepare(
+            'INSERT INTO teachers (name, specialized, degree, description, avatar)
+             VALUES (:name, :specialized, :degree, :description, :avatar)'
+        );
+        $stmt->execute([
+            'name' => $data['name'] ?? '',
+            'specialized' => $data['specialized'] ?? '',
+            'degree' => $data['degree'] ?? '',
+            'description' => $data['description'] ?? '',
+            'avatar' => $data['avatar'] ?? '',
+        ]);
+        return $pdo->lastInsertId();
+    }
+}
+
 }

@@ -1,9 +1,16 @@
 <?php
 require_once __DIR__ . '/../models/Teacher.php';
+require_once __DIR__ . '/../services/TeacherService.php';
 require_once __DIR__ . '/../helpers/response.php';
 
 class TeacherController
 {
+    private TeacherService $service;
+
+    public function __construct()
+    {
+        $this->service = new TeacherService();
+    }
     public function index()
     {
         $teachers = Teacher::allFull();
@@ -106,6 +113,63 @@ class TeacherController
             } else {
                 jsonResponse(['error' => 'Lỗi hệ thống: ' . $e->getMessage()], 500);
             }
+        }
+    }
+
+    public function create()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            jsonResponse(['error' => 'Method not allowed'], 405);
+            return;
+        }
+
+        // validate input
+        $name = trim($_POST['name'] ?? '');
+        $specialized = trim($_POST['specialized'] ?? '');
+        $degree = trim($_POST['degree'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+
+        $errors = [];
+        if ($name === '') {
+            $errors['name'] = 'Please enter the teacher name.';
+        } elseif (strlen($name) > 100) {
+            $errors['name'] = 'Teacher name is too long.';
+        }
+
+        if ($specialized === '') {
+            $errors['specialized'] = 'Please select a specialization.';
+        }
+
+        if ($degree === '') {
+            $errors['degree'] = 'Please select a degree.';
+        }
+
+        if ($description === '') {
+            $errors['description'] = 'Please enter a description.';
+        } elseif (strlen($description) > 1000) {
+            $errors['description'] = 'Description is too long.';
+        }
+
+        if (empty($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+            $errors['avatar'] = 'Please select an avatar image.';
+        }
+
+        if (!empty($errors)) {
+            jsonResponse(['error' => 'Validation failed', 'fields' => $errors], 422);
+            return;
+        }
+
+        try {
+            $result = $this->service->create([
+                'name' => $name,
+                'specialized' => $specialized,
+                'degree' => $degree,
+                'description' => $description,
+            ], $_FILES['avatar']);
+
+            jsonResponse(['success' => true, 'id' => $result['id'], 'avatar' => $result['avatar'], 'specialized' => $result['specialized'], 'degree' => $result['degree'], 'description' => $result['description']]);
+        } catch (Throwable $e) {
+            jsonResponse(['error' => 'Internal server error', 'message' => $e->getMessage()], 500);
         }
     }
 
