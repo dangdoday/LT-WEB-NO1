@@ -124,9 +124,6 @@ const deleteRoom = async (id, name) => {
   }
 };
 
-<<<<<<< Updated upstream
-// Tự động chạy khi vào trang
-=======
 import { useRouter } from "vue-router";
 const router = useRouter();
 
@@ -134,7 +131,6 @@ const goToEdit = (id) => {
   router.push(`/classroom/edit/${id}`);
 };
 
->>>>>>> Stashed changes
 onMounted(() => {
   fetchData();
 });
