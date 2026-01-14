@@ -32,17 +32,17 @@ const errors = reactive({
 })
 
 const specializedOptions = [
-  { value: '001', label: '001: Khoa hoc may tinh' },
-  { value: '002', label: '002: Khoa hoc du lieu' },
-  { value: '003', label: '003: Hai duong hoc' },
+  { value: '001', label: '001: Khoa học máy tính' },
+  { value: '002', label: '002: Khoa học dữ liệu' },
+  { value: '003', label: '003: Hải dương học' },
 ]
 
 const degreeOptions = [
-  { value: '001', label: '001: Cu nhan' },
-  { value: '002', label: '002: Thac si' },
-  { value: '003', label: '003: Tien si' },
-  { value: '004', label: '004: Pho giao su' },
-  { value: '005', label: '005: Giao su' },
+  { value: '001', label: '001: Cử nhân' },
+  { value: '002', label: '002: Thạc sĩ' },
+  { value: '003', label: '003: Tiến sĩ' },
+  { value: '004', label: '004: Phó giáo sư' },
+  { value: '005', label: '005: Giáo sư' },
 ]
 
 const selectedSpecializedLabel = computed(() => {
@@ -98,21 +98,21 @@ const validate = () => {
   const name = form.name.trim()
   const description = form.description.trim()
 
-  if (!name) { errors.name = 'Hay nhap ten giao vien.'; ok = false }
-  else if (name.length > 100) { errors.name = 'Khong nhap qua 100 ky tu.'; ok = false }
+  if (!name) { errors.name = 'Hãy nhập tên giáo viên.'; ok = false }
+  else if (name.length > 100) { errors.name = 'Không nhập quá 100 ký tự.'; ok = false }
 
-  if (!form.specialized) { errors.specialized = 'Hay chon chuyen nganh.'; ok = false }
+  if (!form.specialized) { errors.specialized = 'Hãy chọn chuyên ngành.'; ok = false }
 
-  if (!form.degree) { errors.degree = 'Hay chon bang cap.'; ok = false }
+  if (!form.degree) { errors.degree = 'Hãy chọn bằng cấp.'; ok = false }
 
-  if (!description) { errors.description = 'Hay nhap mo ta chi tiet.'; ok = false }
-  else if (description.length > 1000) { errors.description = 'Khong nhap qua 1000 ky tu.'; ok = false }
+  if (!description) { errors.description = 'Hãy nhập mô tả chi tiết.'; ok = false }
+  else if (description.length > 1000) { errors.description = 'Không nhập quá 1000 ký tự.'; ok = false }
 
   // Logic validate ảnh:
   // - Nếu là Thêm mới: Bắt buộc chọn.
   // - Nếu là Sửa: Chỉ bắt lỗi nếu KHÔNG chọn ảnh mới VÀ KHÔNG có ảnh cũ.
   if (!isEditMode.value && !form.avatarFile) {
-    errors.avatarFile = 'Hay chon avatar.'
+    errors.avatarFile = 'Hãy chọn avatar.'
     ok = false
   }
 
@@ -206,7 +206,7 @@ const submit = async () => {
           }
         })
       }
-      serverError.value = payload.message || (isEditMode.value ? 'Cap nhat that bai.' : 'Dang ky that bai.')
+      serverError.value = payload.message || (isEditMode.value ? 'Cập nhật thất bại.' : 'Đăng ký thất bại.')
       submitting.value = false
       step.value = 'input'
       return
@@ -214,7 +214,7 @@ const submit = async () => {
 
     step.value = 'complete'
   } catch (error) {
-    serverError.value = 'Khong the ket noi toi may chu.'
+    serverError.value = 'Không thể kết nối tới máy chủ.'
     step.value = 'input'
   } finally {
     submitting.value = false
@@ -228,7 +228,7 @@ const submit = async () => {
       <header class="card__header">
         <div>
           <p class="eyebrow">{{ isEditMode ? 'Update Teacher' : 'Teacher Registration' }}</p>
-          <h1>{{ isEditMode ? 'Cap nhat giao vien' : 'Dang ky giao vien' }}</h1>
+          <h1>{{ isEditMode ? 'Cập nhật giáo viên' : 'Đăng ký giáo viên' }}</h1>
         </div>
         <div class="step-pill">
           <span v-if="step === 'input'">Input</span>
@@ -240,16 +240,16 @@ const submit = async () => {
       <!-- STEP 1: INPUT -->
       <form v-if="step === 'input'" class="form" @submit.prevent="goConfirm">
         <div class="form-grid">
-          <label for="name">Ho va Ten</label>
+          <label for="name">Họ và Tên</label>
           <div>
-            <input id="name" v-model="form.name" type="text" maxlength="100" placeholder="Nhap ten giao vien" />
+            <input id="name" v-model="form.name" type="text" maxlength="100" placeholder="Nhập tên giáo viên" />
             <p v-if="errors.name" class="error">{{ errors.name }}</p>
           </div>
 
-          <label for="specialized">Chuyen nganh</label>
+          <label for="specialized">Chuyên ngành</label>
           <div>
             <select id="specialized" v-model="form.specialized">
-              <option disabled value="">Chon chuyen nganh</option>
+              <option disabled value="">Chọn chuyên ngành</option>
               <option v-for="option in specializedOptions" :key="option.value" :value="option.value">
                 {{ option.label }}
               </option>
@@ -257,10 +257,10 @@ const submit = async () => {
             <p v-if="errors.specialized" class="error">{{ errors.specialized }}</p>
           </div>
 
-          <label for="degree">Hoc vi</label>
+          <label for="degree">Học vị</label>
           <div>
             <select id="degree" v-model="form.degree">
-              <option disabled value="">Chon bang cap</option>
+              <option disabled value="">Chọn bằng cấp</option>
               <option v-for="option in degreeOptions" :key="option.value" :value="option.value">
                 {{ option.label }}
               </option>
@@ -281,18 +281,18 @@ const submit = async () => {
             </div>
             <!-- Gợi ý nhỏ khi đang Edit -->
             <p v-if="isEditMode" style="font-size:12px; color:#666; margin-top:4px;">
-              (De trong neu khong muon doi anh)
+              (Để trống nếu không muốn đổi ảnh)
             </p>
             <p v-if="errors.avatarFile" class="error">{{ errors.avatarFile }}</p>
           </div>
 
-          <label for="description">Mo ta them</label>
+          <label for="description">Mô tả thêm</label>
           <div>
             <textarea
                 id="description"
                 v-model="form.description"
                 maxlength="1000"
-                placeholder="Nhap mo ta chi tiet"
+                placeholder="Nhập mô tả chi tiết"
                 rows="6"
             ></textarea>
             <p v-if="errors.description" class="error">{{ errors.description }}</p>
@@ -300,7 +300,7 @@ const submit = async () => {
         </div>
 
         <div class="actions">
-          <button type="submit" class="primary">Xac nhan</button>
+          <button type="submit" class="primary">Xác nhận</button>
           <p v-if="serverError" class="error">{{ serverError }}</p>
         </div>
       </form>
@@ -309,13 +309,13 @@ const submit = async () => {
       <div v-else-if="step === 'confirm'" class="confirm">
         <div class="form-grid">
           <!-- Hiển thị lại đầy đủ các trường -->
-          <span class="label">Ho va Ten</span>
+          <span class="label">Họ và Tên</span>
           <span class="value">{{ form.name }}</span>
 
-          <span class="label">Chuyen nganh</span>
+          <span class="label">Chuyên ngành</span>
           <span class="value">{{ selectedSpecializedLabel }}</span>
 
-          <span class="label">Hoc vi</span>
+          <span class="label">Học vị</span>
           <span class="value">{{ selectedDegreeLabel }}</span>
 
           <span class="label">Avatar</span>
@@ -324,16 +324,16 @@ const submit = async () => {
             <span v-else class="avatar-placeholder">IMAGE</span>
           </div>
 
-          <span class="label">Mo ta them</span>
+          <span class="label">Mô tả thêm</span>
           <div class="value description-box">
             {{ form.description }}
           </div>
         </div>
 
         <div class="actions">
-          <button type="button" class="ghost" @click="goEdit">Sua lai</button>
+          <button type="button" class="ghost" @click="goEdit">Sửa lại</button>
           <button type="button" class="primary" :disabled="submitting" @click="submit">
-            {{ submitting ? 'Dang xu ly...' : (isEditMode ? 'Cap nhat' : 'Dang ky') }}
+            {{ submitting ? 'Đang xử lý...' : (isEditMode ? 'Cập nhật' : 'Đăng ký') }}
           </button>
           <p v-if="serverError" class="error">{{ serverError }}</p>
         </div>
@@ -342,9 +342,9 @@ const submit = async () => {
       <!-- STEP 3: COMPLETE -->
       <div v-else class="complete">
         <div class="complete__box">
-          <h2>{{ isEditMode ? 'Cap nhat thanh cong' : 'Dang ky thanh cong' }}</h2>
-          <p>{{ isEditMode ? 'Thong tin giao vien da duoc cap nhat.' : 'Ban da dang ky giao vien thanh cong.' }}</p>
-          <button type="button" class="primary" @click="goHome">Tro ve trang chu</button>
+          <h2>{{ isEditMode ? 'Cập nhật thành công' : 'Đăng ký thành công' }}</h2>
+          <p>{{ isEditMode ? 'Thông tin giáo viên đã được cập nhật.' : 'Bạn đã đăng ký giáo viên thành công.' }}</p>
+          <button type="button" class="primary" @click="goHome">Trở về trang chủ</button>
         </div>
       </div>
     </div>
