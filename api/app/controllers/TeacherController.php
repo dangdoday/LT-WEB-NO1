@@ -188,7 +188,8 @@ class TeacherController
 
     public function update()
     {
-        $id = isset($_GET['id']) ? $_GET['id'] : null;
+        // Support update via query string or multipart/form-data (FormData)
+        $id = $_REQUEST['id'] ?? null;
         if (!$id) {
             jsonResponse(['error' => 'ID is required'], 400);
             return;
@@ -215,7 +216,21 @@ class TeacherController
                 $filename = uniqid() . '_' . basename($file['name']);
                 $targetPath = $uploadDir . $filename;
                 if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                    $data['avatar'] = $filename;
+                    // Keep DB format consistent with create(): store relative path
+                    $data['avatar'] = 'web/image/avatar/' . $filename;
+
+                    // Delete old avatar file if present
+                    $oldAvatar = $existing['avatar'] ?? '';
+                    if (!empty($oldAvatar)) {
+                        if (strpos($oldAvatar, 'web/') === 0) {
+                            $oldPath = __DIR__ . '/../../' . $oldAvatar;
+                        } else {
+                            $oldPath = __DIR__ . '/../../web/image/avatar/' . $oldAvatar;
+                        }
+                        if (file_exists($oldPath)) {
+                            @unlink($oldPath);
+                        }
+                    }
                 } else {
                     jsonResponse(['error' => 'Failed to upload avatar'], 500);
                     return;
