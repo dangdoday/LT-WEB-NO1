@@ -1,84 +1,3 @@
-<template>
-  <div class="page-container">
-    <h1 class="page-title">Tìm kiếm thiết bị</h1>
-
-    <div class="content-wrapper">
-      <!-- 1.1 Form Search -->
-      <div class="card search-card">
-        <div class="form-group-row">
-          <!-- Từ khóa -->
-          <div class="form-group">
-            <label>Từ khóa</label>
-            <input
-                type="text"
-                v-model="searchParams.keyword"
-                class="form-control"
-                placeholder="Nhập tên thiết bị..."
-            >
-          </div>
-
-          <!-- Tình trạng -->
-          <div class="form-group">
-            <label>Tình trạng</label>
-            <select v-model="searchParams.status" class="form-control">
-              <option value="">(Tất cả)</option>
-              <option value="1">Đang mượn</option>
-              <option value="0">Đang rảnh</option>
-            </select>
-          </div>
-
-          <!-- Nút Tìm kiếm -->
-          <div class="form-group button-group">
-            <button @click="handleSearch" class="btn btn-primary">Tìm kiếm</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 1.2 Kết quả tìm kiếm -->
-      <div class="card result-card">
-        <div class="result-header">
-          Số thiết bị tìm thấy: <strong>{{ devices.length }}</strong>
-        </div>
-
-        <table class="table">
-          <thead>
-          <tr>
-            <th style="width: 50px; text-align: center;">No</th>
-            <th>Tên Thiết bị</th>
-            <th style="width: 150px; text-align: center;">Trạng thái</th>
-            <th style="width: 200px; text-align: center;">Action</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-if="devices.length === 0">
-            <td colspan="4" class="text-center">Không tìm thấy dữ liệu</td>
-          </tr>
-          <tr v-for="(device, index) in devices" :key="device.id">
-            <td class="text-center">{{ index + 1 }}</td>
-            <td>{{ device.name }}</td>
-
-            <!-- Trạng thái -->
-            <td class="text-center">
-              <span v-if="device.is_borrowed == 0" class="badge badge-success">Đang rảnh</span>
-              <span v-else class="badge badge-warning">Đang mượn</span>
-            </td>
-
-            <!-- Action -->
-            <td class="text-center action-buttons">
-              <!-- Chỉ hiện khi Đang rảnh -->
-              <template v-if="device.is_borrowed == 0">
-                <button @click="handleEdit(device.id)" class="btn btn-sm btn-edit">Sửa</button>
-                <button @click="handleDelete(device)" class="btn btn-sm btn-delete">Xóa</button>
-              </template>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -90,11 +9,14 @@ const searchParams = ref({
   status: '' // Mặc định là rỗng (Tất cả)
 });
 
+const loading = ref(false);
+
 // Hàm gọi API
 const fetchDevices = async () => {
+  loading.value = true;
   try {
-    // Tạo Query String: ?keyword=abc&status=1
     const params = new URLSearchParams(searchParams.value).toString();
+    // Lưu ý: Nếu cần dùng apiBase như các file trước thì sửa lại dòng này
     const res = await fetch(`/api/device_search.php?${params}`);
     const data = await res.json();
 
@@ -105,17 +27,18 @@ const fetchDevices = async () => {
     }
   } catch (error) {
     console.error(error);
+  } finally {
+    loading.value = false;
   }
 };
 
-// 2.0 Action Tìm kiếm
+// Action Tìm kiếm
 const handleSearch = () => {
   fetchDevices();
 };
 
-// 2.1 Action Xóa
+// Action Xóa
 const handleDelete = async (device) => {
-  // Popup confirm theo yêu cầu
   const confirmMsg = `Bạn chắc chắn muốn xóa thiết bị "${device.name}" ?`;
   if (!confirm(confirmMsg)) return;
 
@@ -129,7 +52,7 @@ const handleDelete = async (device) => {
 
     if (data.status === 'success') {
       alert('Xóa thành công!');
-      fetchDevices(); // Refresh màn hình
+      fetchDevices();
     } else {
       alert(data.message);
     }
@@ -138,130 +61,311 @@ const handleDelete = async (device) => {
   }
 };
 
-// 2.2 Action Sửa
+// Action Sửa
 const handleEdit = (id) => {
   router.push({ name: 'device-update', query: { id } });
 };
 
-// 0) Initial display
+// Initial display
 onMounted(() => {
   fetchDevices();
 });
 </script>
 
+<template>
+  <div class="page">
+    <div class="card">
+      <header class="card__header">
+        <div>
+          <p class="eyebrow">Management</p>
+          <h1>Tìm kiếm thiết bị</h1>
+        </div>
+      </header>
+
+      <!-- Form tìm kiếm -->
+      <div class="form-grid search-grid">
+        <label>Từ khóa</label>
+        <input
+            type="text"
+            v-model="searchParams.keyword"
+            placeholder="Nhập tên thiết bị..."
+            @keyup.enter="handleSearch"
+        >
+
+        <label>Tình trạng</label>
+        <select v-model="searchParams.status">
+          <option value="">(Tất cả)</option>
+          <option value="1">Đang mượn</option>
+          <option value="0">Đang rảnh</option>
+        </select>
+      </div>
+
+      <div class="actions">
+        <button @click="handleSearch" class="primary">
+          {{ loading ? 'Đang tìm...' : 'Tìm kiếm' }}
+        </button>
+      </div>
+
+      <!-- Kết quả -->
+      <div class="result-summary">
+        Số thiết bị tìm thấy: <strong>{{ devices.length }}</strong>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="mockup-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">STT</th>
+              <th>Tên Thiết bị</th>
+              <th style="width: 150px;">Trạng thái</th>
+              <th style="width: 180px;">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="devices.length === 0">
+              <td colspan="4" class="empty">Không tìm thấy dữ liệu</td>
+            </tr>
+            <tr v-for="(device, index) in devices" :key="device.id">
+              <td>{{ index + 1 }}</td>
+              <td>
+                <span class="device-name">{{ device.name }}</span>
+              </td>
+              
+              <!-- Trạng thái -->
+              <td>
+                <span v-if="device.is_borrowed == 0" class="badge badge-success">Đang rảnh</span>
+                <span v-else class="badge badge-warning">Đang mượn</span>
+              </td>
+
+              <!-- Action -->
+              <td>
+                <!-- Chỉ hiện nút khi Đang rảnh -->
+                <div v-if="device.is_borrowed == 0" class="action-group">
+                  <button @click="handleEdit(device.id)" class="secondary small">Sửa</button>
+                  <button @click="handleDelete(device)" class="danger small">Xóa</button>
+                </div>
+                <span v-else class="muted">-</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button class="ghost" @click="router.push('/')">Trở về trang chủ</button>
+      </div>
+    </div>
+  </div>
+</template>
+
 <style scoped>
-/* CSS phỏng theo giao diện trong ảnh */
-.page-container {
-  padding: 20px;
-  background-color: #f0f2f5;
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap");
+
+.page {
   min-height: 100vh;
-  font-family: Arial, sans-serif;
-}
-
-.page-title {
-  text-align: center;
-  color: #3b5998; /* Màu xanh Facebook/Zalo giống ảnh */
-  font-weight: bold;
-  margin-bottom: 20px;
-}
-
-.content-wrapper {
-  max-width: 1000px;
-  margin: 0 auto;
+  padding: 48px 20px 80px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .card {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
+  width: min(920px, 100%);
+  background: #fffdf8;
+  border: 1px solid #cdd7e5;
+  border-radius: 24px;
+  padding: 28px 32px 36px;
+  box-shadow: 0 24px 60px rgba(30, 35, 55, 0.12);
+}
+
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.card__header h1 {
+  margin: 8px 0 0;
+  font-size: 32px;
+  letter-spacing: -0.02em;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: #5b6475;
+  margin: 0;
+}
+
+/* === FORM GRID (Giống ReturnDevice) === */
+.form-grid {
+  display: grid;
+  grid-template-columns: 160px auto; 
+  gap: 16px 20px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  align-items: center;
 }
 
-.form-group-row {
+.search-grid label {
+  font-weight: 600;
+  color: #5b6475;
+}
+
+/* Fix cứng độ rộng input giống các trang kia */
+input, select {
+  width: 400px !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  border: 1px solid #cdd7e5;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #2e6db4;
+}
+
+/* === BUTTONS === */
+.actions {
   display: flex;
-  gap: 20px;
-  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
-.form-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.button-group {
-  flex: 0 0 auto;
-}
-
-label {
-  font-weight: bold;
-  margin-bottom: 5px;
-  font-size: 14px;
-}
-
-.form-control {
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.btn {
-  padding: 8px 20px;
+button {
   border: none;
-  border-radius: 4px;
+  border-radius: 14px;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: bold;
+  font-family: inherit;
+  transition: opacity 0.2s;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button.primary {
+  background: #2e6db4;
   color: white;
+  box-shadow: 0 4px 12px rgba(46, 109, 180, 0.2);
 }
 
-.btn-primary {
-  background-color: #3578e5;
-}
-.btn-primary:hover { background-color: #2a65c7; }
-
-.result-header {
-  margin-bottom: 10px;
-  font-size: 14px;
+button.ghost {
+  background: #eef2f9;
+  color: #2e6db4;
+  margin-top: 30px;
 }
 
-.table {
+/* Nút nhỏ trong bảng */
+button.small {
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+button.secondary {
+  background: #eef2f9;
+  color: #2e6db4;
+}
+
+button.danger {
+  background: #fff1f0;
+  color: #cf1322;
+}
+
+/* === TABLE === */
+.result-summary {
+  font-weight: 500;
+  margin-bottom: 15px;
+  color: #1d2330;
+}
+
+.table-wrapper {
+  border: 1px solid #cdd7e5;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.mockup-table {
   width: 100%;
   border-collapse: collapse;
+}
+
+.mockup-table th,
+.mockup-table td {
+  border-bottom: 1px solid #ebf0f5;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.mockup-table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #5b6475;
   font-size: 14px;
 }
 
-.table th, .table td {
-  border: 1px solid #dee2e6;
-  padding: 10px;
-  vertical-align: middle;
+.device-name {
+  font-weight: 500;
+  color: #1d2330;
 }
 
-.table th {
-  background-color: #f8f9fa;
-  font-weight: bold;
+.empty {
+  text-align: center;
+  color: #999;
+  padding: 30px;
 }
 
-.text-center { text-align: center; }
+.muted {
+  color: #ccc;
+}
 
-/* Trạng thái */
+.action-group {
+  display: flex;
+  gap: 8px;
+}
+
+/* === BADGES (Trạng thái) === */
 .badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  color: white;
-}
-.badge-success { background-color: #28a745; } /* Màu xanh lá */
-.badge-warning { background-color: #ffc107; color: black; } /* Màu vàng */
-
-/* Buttons nhỏ */
-.btn-sm {
+  display: inline-block;
   padding: 4px 10px;
-  font-size: 12px;
-  margin: 0 2px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
 }
-.btn-edit { background-color: #17a2b8; } /* Màu xanh dương nhạt */
-.btn-delete { background-color: #dc3545; } /* Màu đỏ */
 
+.badge-success {
+  background: #e6ffec;
+  color: #1f9d55;
+  border: 1px solid #b7ebc9;
+}
+
+.badge-warning {
+  background: #fff7e6;
+  color: #d46b08;
+  border: 1px solid #ffd591;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 720px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  input, select {
+    width: 100% !important;
+  }
+}
 </style>

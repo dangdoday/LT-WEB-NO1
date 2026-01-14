@@ -88,7 +88,7 @@ onMounted(async () => {
     <div class="card">
       <header class="card__header">
         <div>
-          <p class="eyebrow">Return device</p>
+          <!-- Bỏ class eyebrow để giống header bên Teacher -->
           <h1>Trả thiết bị</h1>
         </div>
       </header>
@@ -97,20 +97,18 @@ onMounted(async () => {
       <div v-else-if="serverError" class="error">{{ serverError }}</div>
 
       <div v-else>
-        <div class="form-grid search-grid">
+        <!-- Form tìm kiếm -->
+        <div class="form-grid">
           <label>Thiết bị</label>
+          <!-- Bỏ style max-width để nó tự giãn theo grid -->
           <input 
             v-model="filters.device_name" 
             type="text" 
             placeholder="Nhập tên thiết bị" 
-            style="width: 100%; max-width: 400px;" 
           />
 
           <label>Giáo viên</label>
-          <select 
-            v-model="filters.teacher_id"
-            style="width: 100%; max-width: 400px;"
-          >
+          <select v-model="filters.teacher_id">
             <option value="">Chọn giáo viên</option>
             <option v-for="t in options.teachers" :key="t.id" :value="t.id">
               {{ t.name }}
@@ -118,10 +116,7 @@ onMounted(async () => {
           </select>
 
           <label>Lớp học</label>
-          <select 
-            v-model="filters.classroom_id"
-            style="width: 100%; max-width: 400px;"
-          >
+          <select v-model="filters.classroom_id">
             <option value="">Chọn lớp học</option>
             <option v-for="c in options.classrooms" :key="c.id" :value="c.id">
               {{ c.name }}
@@ -182,7 +177,28 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap");
+/* 1. Dùng Font giống Teacher Register */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+/* 2. Định nghĩa biến màu sắc giống hệt */
+:global(:root) {
+  --paper: #f5f0e6;
+  --ink: #1d2330;
+  --accent: #2e6db4;
+  --accent-2: #e0a42c;
+  --line: #cdd7e5;
+  --muted: #5b6475;
+  --shadow: 0 24px 60px rgba(30, 35, 55, 0.12);
+}
+
+/* 3. Background Gradient toàn trang */
+:global(body) {
+  margin: 0;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  background: radial-gradient(circle at top, #f4d9b5 0%, #f5f0e6 40%) no-repeat,
+  linear-gradient(135deg, #f5f0e6 0%, #dbe4f2 100%);
+  color: var(--ink);
+}
 
 .page {
   min-height: 100vh;
@@ -193,58 +209,51 @@ onMounted(async () => {
 }
 
 .card {
-  width: min(920px, 100%);
+  width: min(880px, 100%); /* Giống Teacher Register */
   background: #fffdf8;
-  border: 1px solid #cdd7e5;
+  border: 1px solid var(--line);
   border-radius: 24px;
   padding: 28px 32px 36px;
-  box-shadow: 0 24px 60px rgba(30, 35, 55, 0.12);
+  box-shadow: var(--shadow);
+  animation: rise 0.6s ease;
 }
 
 .card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .card__header h1 {
-  margin: 8px 0 0;
+  margin: 0;
   font-size: 32px;
   letter-spacing: -0.02em;
 }
 
-.eyebrow {
-  text-transform: uppercase;
-  font-weight: 600;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  color: #5b6475;
-  margin: 0;
-}
-
+/* GRID LAYOUT: Đây là chỗ quyết định độ dài input */
 .form-grid {
   display: grid;
-  grid-template-columns: 160px 1fr; 
-  gap: 16px 20px;
-  margin-bottom: 20px;
-  align-items: center;
+  grid-template-columns: 160px 1fr; /* 1fr sẽ tự giãn hết khoảng trống còn lại */
+  gap: 20px 24px;
+  max-width: 100%;
+  margin-bottom: 24px;
 }
 
-.search-grid label {
+label {
   font-weight: 600;
-  color: #5b6475;
+  color: var(--muted);
+  align-self: center;
 }
 
 input,
 select {
-  border: 1px solid #cdd7e5;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  background: #fff;
   border-radius: 12px;
   padding: 12px 14px;
   font-size: 15px;
-  background: #fff;
-  box-sizing: border-box;
+  font-family: inherit;
 }
 
 .actions {
@@ -252,6 +261,7 @@ select {
   gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 20px;
+  align-items: center;
 }
 
 button {
@@ -265,7 +275,7 @@ button {
 }
 
 button.primary {
-  background: #2e6db4;
+  background: var(--accent);
   color: white;
   box-shadow: 0 10px 20px rgba(46, 109, 180, 0.2);
 }
@@ -277,8 +287,8 @@ button.primary.small {
 
 button.ghost {
   background: #eef2f9;
-  color: #2e6db4;
-  margin-top: 30px;
+  color: var(--accent);
+  margin-top: 20px;
 }
 
 button:disabled {
@@ -286,15 +296,18 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* Table Style cho khớp theme */
 .result-summary {
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 15px;
+  color: var(--ink);
 }
 
 .table-wrapper {
-  border: 1px solid #cdd7e5;
-  border-radius: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
   overflow-x: auto;
+  background: #fff;
 }
 
 .mockup-table {
@@ -304,33 +317,55 @@ button:disabled {
 
 .mockup-table th,
 .mockup-table td {
-  border: 1px solid #cdd7e5;
-  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 14px 16px;
   text-align: left;
 }
 
 .mockup-table th {
-  background-color: #fff;
+  background-color: #f9fafb;
   font-weight: 600;
+  color: var(--muted);
 }
 
 .empty {
   text-align: center;
   color: #999;
+  padding: 30px;
 }
 
 .muted {
-  color: #999;
+  color: #ccc;
 }
 
 .loading {
   padding: 16px 0 8px;
-  color: #5b6475;
+  color: var(--muted);
+}
+
+.error {
+  color: #b13535;
+  margin-bottom: 16px;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(18px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @media (max-width: 720px) {
   .form-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .card {
+    padding: 24px;
   }
 }
 </style>

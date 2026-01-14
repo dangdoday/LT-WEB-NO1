@@ -80,7 +80,6 @@ const validate = () => {
     errors.start_transaction_plan = "Hãy chọn thời gian bắt đầu.";
     ok = false;
   } else {
-    // Kiểm tra ngày bắt đầu phải lớn hơn hôm nay
     const now = new Date();
     const startDate = new Date(form.start_transaction_plan);
     if (startDate <= now) {
@@ -92,7 +91,6 @@ const validate = () => {
     errors.end_transaction_plan = "Hãy chọn thời gian kết thúc.";
     ok = false;
   } else if (form.start_transaction_plan) {
-    // Kiểm tra ngày kết thúc phải lớn hơn ngày bắt đầu
     const startDate = new Date(form.start_transaction_plan);
     const endDate = new Date(form.end_transaction_plan);
     if (endDate <= startDate) {
@@ -174,7 +172,6 @@ onMounted(async () => {
     options.teachers = payload.teachers || [];
     options.classrooms = payload.classrooms || [];
 
-    // Set device_id AFTER options are loaded to ensure correct selection
     if (queryDeviceId) {
       form.device_id = queryDeviceId;
     }
@@ -348,24 +345,6 @@ onMounted(async () => {
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap");
 
-:global(:root) {
-  --paper: #f5f0e6;
-  --ink: #1d2330;
-  --accent: #2e6db4;
-  --accent-2: #e0a42c;
-  --line: #cdd7e5;
-  --muted: #5b6475;
-  --shadow: 0 24px 60px rgba(30, 35, 55, 0.12);
-}
-
-:global(body) {
-  margin: 0;
-  font-family: "Manrope", system-ui, sans-serif;
-  background: radial-gradient(circle at top, #f0e3cf 0%, #f5f0e6 45%) no-repeat,
-    linear-gradient(135deg, #f5f0e6 0%, #dbe4f2 100%);
-  color: var(--ink);
-}
-
 .page {
   min-height: 100vh;
   padding: 48px 20px 80px;
@@ -377,11 +356,10 @@ onMounted(async () => {
 .card {
   width: min(920px, 100%);
   background: #fffdf8;
-  border: 1px solid var(--line);
+  border: 1px solid #cdd7e5;
   border-radius: 24px;
   padding: 28px 32px 36px;
-  box-shadow: var(--shadow);
-  animation: rise 0.6s ease;
+  box-shadow: 0 24px 60px rgba(30, 35, 55, 0.12);
 }
 
 .card__header {
@@ -403,7 +381,7 @@ onMounted(async () => {
   font-weight: 600;
   font-size: 12px;
   letter-spacing: 0.14em;
-  color: var(--muted);
+  color: #5b6475;
   margin: 0;
 }
 
@@ -411,33 +389,37 @@ onMounted(async () => {
   padding: 8px 16px;
   border-radius: 999px;
   background: rgba(46, 109, 180, 0.12);
-  color: var(--accent);
+  color: #2e6db4;
   font-weight: 600;
   text-transform: uppercase;
   font-size: 12px;
   letter-spacing: 0.1em;
 }
 
+/* === PHẦN LAYOUT GRID (GIỐNG RETURN DEVICE) === */
 .form-grid {
   display: grid;
-  grid-template-columns: 160px 1fr;
+  grid-template-columns: 160px auto; /* Tự động co giãn theo nội dung input */
   gap: 16px 20px;
 }
 
 label,
 .label {
   font-weight: 600;
-  color: var(--muted);
-  align-self: center;
+  color: #5b6475;
+  align-self: center; /* Căn giữa label theo chiều dọc */
 }
 
+/* === PHẦN INPUT (FIX CỨNG 400PX) === */
 input,
 select,
 textarea {
-  width: 100%;
-  max-width: 100%;
+  /* Dùng !important để đảm bảo độ rộng chuẩn 400px */
+  width: 400px !important;
+  max-width: 100% !important;
+
   box-sizing: border-box;
-  border: 1px solid var(--line);
+  border: 1px solid #cdd7e5;
   background: #fff;
   border-radius: 12px;
   padding: 12px 14px;
@@ -451,8 +433,9 @@ input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: #2e6db4;
 }
+/* =========================================== */
 
 select {
   height: 44px;
@@ -477,22 +460,12 @@ select option {
 input[readonly] {
   background-color: #f9fafb;
   cursor: not-allowed;
-  color: var(--ink);
+  color: #1d2330;
 }
 
 input[type="datetime-local"] {
   height: 44px;
   cursor: pointer;
-}
-
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.2s ease;
-}
-
-input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
 }
 
 textarea {
@@ -520,14 +493,14 @@ button {
 }
 
 button.primary {
-  background: var(--accent);
+  background: #2e6db4;
   color: white;
   box-shadow: 0 10px 20px rgba(46, 109, 180, 0.2);
 }
 
 button.ghost {
   background: #eef2f9;
-  color: var(--accent);
+  color: #2e6db4;
 }
 
 button:disabled {
@@ -547,12 +520,14 @@ button:disabled {
 }
 
 .description-box {
-  border: 1px solid var(--line);
+  border: 1px solid #cdd7e5;
   border-radius: 12px;
   padding: 14px;
   background: #fff;
   min-height: 120px;
   white-space: pre-wrap;
+  width: 400px !important; /* Fix luôn cái ô review ghi chú */
+  max-width: 100% !important;
 }
 
 .complete {
@@ -571,7 +546,7 @@ button:disabled {
 
 .loading {
   padding: 16px 0 8px;
-  color: var(--muted);
+  color: #5b6475;
 }
 
 @keyframes rise {
@@ -603,10 +578,12 @@ button:disabled {
     font-size: 24px;
   }
 
+  /* Trên mobile thì cho bung full chiều rộng */
   input,
   select,
-  textarea {
-    max-width: 100%;
+  textarea,
+  .description-box {
+    width: 100% !important; 
     font-size: 16px;
   }
 
