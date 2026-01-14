@@ -134,49 +134,62 @@ class TeacherController
         }
     }
 
+    /**
+     * Tạo mới giáo viên (Create new teacher)
+     */
     public function create()
     {
+        // Chỉ chấp nhận phương thức POST
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             jsonResponse(['error' => 'Method not allowed'], 405);
             return;
         }
 
-        // validate input
+        // Lấy và làm sạch dữ liệu đầu vào (Validate input)
         $name = trim($_POST['name'] ?? '');
         $specialized = trim($_POST['specialized'] ?? '');
         $degree = trim($_POST['degree'] ?? '');
         $description = trim($_POST['description'] ?? '');
 
+        // Mảng lưu các lỗi validate
         $errors = [];
+        
+        // Kiểm tra tên giáo viên
         if ($name === '') {
             $errors['name'] = 'Please enter the teacher name.';
         } elseif (strlen($name) > 100) {
             $errors['name'] = 'Teacher name is too long.';
         }
 
+        // Kiểm tra chuyên ngành
         if ($specialized === '') {
             $errors['specialized'] = 'Please select a specialization.';
         }
 
+        // Kiểm tra học vị
         if ($degree === '') {
             $errors['degree'] = 'Please select a degree.';
         }
 
+        // Kiểm tra mô tả
         if ($description === '') {
             $errors['description'] = 'Please enter a description.';
         } elseif (strlen($description) > 1000) {
             $errors['description'] = 'Description is too long.';
         }
 
+        // Kiểm tra ảnh đại diện
         if (empty($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
             $errors['avatar'] = 'Please select an avatar image.';
         }
 
+        // Nếu có lỗi validate, trả về thông báo lỗi
         if (!empty($errors)) {
             jsonResponse(['error' => 'Validation failed', 'fields' => $errors], 422);
             return;
         }
 
+        // Gọi service để tạo giáo viên mới
         try {
             $result = $this->service->create([
                 'name' => $name,

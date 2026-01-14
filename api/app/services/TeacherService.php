@@ -4,6 +4,7 @@ require_once __DIR__ . '/../models/Teacher.php';
 class TeacherService
 {
     /**
+     * Tạo bản ghi giáo viên và lưu ảnh đại diện đã tải lên.
      * Create a teacher record and save uploaded avatar.
      * @param array $data ['name','specialized','degree','description']
      * @param array $file $_FILES['avatar']
@@ -12,18 +13,19 @@ class TeacherService
      */
     public function create(array $data, array $file)
     {
-        // validate file type
+        // Kiểm tra loại file hợp lệ (Validate file type)
         $allowed = [
             'image/jpeg' => 'jpg',
             'image/png' => 'png',
             'image/webp' => 'webp',
         ];
 
+        // Kiểm tra xem có file được upload hay không
         if (!isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
             throw new RuntimeException('No uploaded file');
         }
 
-        // detect mime
+        // Phát hiện loại MIME của file (Detect mime type)
         if (function_exists('mime_content_type')) {
             $mime = mime_content_type($file['tmp_name']);
         } elseif (function_exists('finfo_open')) {
@@ -35,10 +37,12 @@ class TeacherService
             $mime = $imageInfo['mime'] ?? false;
         }
 
+        // Kiểm tra loại file có được phép hay không
         if (!isset($allowed[$mime])) {
             throw new RuntimeException('Invalid file type');
         }
 
+        // Tạo thư mục upload nếu chưa tồn tại
         $uploadDir = __DIR__ . '/../../web/image/avatar';
         if (!is_dir($uploadDir)) {
             if (!mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
@@ -46,15 +50,16 @@ class TeacherService
             }
         }
 
-        // upload file
+        // Tạo tên file duy nhất và di chuyển file (Upload file)
         $filename = 'teacher_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $allowed[$mime];
         $targetPath = $uploadDir . '/' . $filename;
 
+        // Di chuyển file đã upload vào thư mục đích
         if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
             throw new RuntimeException('Failed to move uploaded file');
         }
 
-        // store teacher record
+        // Lưu thông tin giáo viên vào cơ sở dữ liệu (Store teacher record)
         $relativePath = 'web/image/avatar/' . $filename;
 
         $id = Teacher::create([
@@ -68,6 +73,9 @@ class TeacherService
         return ['id' => $id, 'avatar' => $relativePath, 'specialized' => $data['specialized'], 'degree' => $data['degree'], 'description' => $data['description']];
     }
 
+    /**
+     * Cập nhật thông tin giáo viên (Update teacher information)
+     */
     public function update($id, array $data, ?array $file = null)
     {
         $updateData = [
@@ -77,9 +85,9 @@ class TeacherService
             'description' => $data['description'] ?? null,
         ];
 
-        // Handle file upload if exists
+        // Xử lý upload file mới nếu có (Handle file upload if exists)
         if ($file && isset($file['tmp_name']) && is_uploaded_file($file['tmp_name'])) {
-            // Validate and upload similar to create
+            // Kiểm tra và upload file tương tự như khi tạo mới
              $allowed = [
                 'image/jpeg' => 'jpg',
                 'image/png' => 'png',
@@ -118,7 +126,6 @@ class TeacherService
 
             $updateData['avatar'] = 'web/image/avatar/' . $filename;
             
-            // TODO: Ideally delete old avatar here but skipping for simplicity
         }
 
         return Teacher::updateWithAvatar($id, $updateData);
