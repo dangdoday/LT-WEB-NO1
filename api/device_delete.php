@@ -25,7 +25,12 @@ try {
         exit;
     }
 
-    // 2. Thực hiện xóa
+    // 2. Xóa tất cả lịch sử transactions liên quan
+    $deleteTransSql = "DELETE FROM transactions WHERE device_id = :id";
+    $stmtTrans = $pdo->prepare($deleteTransSql);
+    $stmtTrans->execute([':id' => $id]);
+
+    // 3. Thực hiện xóa thiết bị
     $deleteSql = "DELETE FROM devices WHERE id = :id";
     $stmt = $pdo->prepare($deleteSql);
     $stmt->execute([':id' => $id]);
