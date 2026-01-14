@@ -39,7 +39,7 @@ class ClassroomService
             throw new RuntimeException('Invalid file type');
         }
 
-        $uploadDir = __DIR__ . '/../../web/image/classroom';
+        $uploadDir = __DIR__ . '/../../web/image/avatar';
         if (!is_dir($uploadDir)) {
             if (!mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
                 throw new RuntimeException('Unable to create upload dir');
@@ -55,7 +55,7 @@ class ClassroomService
         }
 
         // store classroom record
-        $relativePath = 'web/image/classroom/' . $filename;
+        $relativePath = 'web/image/avatar/' . $filename;
 
         $id = Classroom::create([
             'name' => $data['name'] ?? null,
@@ -101,7 +101,7 @@ class ClassroomService
                 throw new RuntimeException('Invalid file type');
             }
 
-            $uploadDir = __DIR__ . '/../../web/image/classroom';
+            $uploadDir = __DIR__ . '/../../web/image/avatar';
              if (!is_dir($uploadDir)) {
                 if (!mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
                     throw new RuntimeException('Unable to create upload dir');
@@ -115,11 +115,37 @@ class ClassroomService
                 throw new RuntimeException('Failed to move uploaded file');
             }
 
-            $updateData['avatar'] = 'web/image/classroom/' . $filename;
-            
-            // TODO: Ideally delete old avatar here but skipping for simplicity
+            // Get old avatar to delete
+            $currentClassroom = Classroom::findById($id);
+            if ($currentClassroom && !empty($currentClassroom['avatar'])) {
+                $oldAvatarPath = __DIR__ . '/../../' . $currentClassroom['avatar'];
+                if (file_exists($oldAvatarPath)) {
+                    unlink($oldAvatarPath);
+                }
+            }
+
+            $updateData['avatar'] = 'web/image/avatar/' . $filename;
         }
 
         return Classroom::update($id, $updateData);
+    }
+
+    public function delete($id)
+    {
+        $classroom = Classroom::findById($id);
+        if (!$classroom) {
+            return false;
+        }
+
+        $result = Classroom::delete($id);
+
+        if ($result && !empty($classroom['avatar'])) {
+            $avatarPath = __DIR__ . '/../../' . $classroom['avatar'];
+            if (file_exists($avatarPath)) {
+                unlink($avatarPath);
+            }
+        }
+
+        return $result;
     }
 }
