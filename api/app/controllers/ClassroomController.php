@@ -43,7 +43,7 @@ class ClassroomController
             return;
         }
 
-        $result = Classroom::delete($id);
+        $result = $this->service->delete($id);
 
         if ($result) {
             jsonResponse(['success' => true, 'message' => 'Đã xóa thành công']);
