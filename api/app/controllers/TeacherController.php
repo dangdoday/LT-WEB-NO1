@@ -111,9 +111,14 @@ class TeacherController
             if ($result) {
                 // Xóa file avatar nếu có
                 if ($teacher && !empty($teacher['avatar'])) {
-                    $avatarPath = __DIR__ . '/../../web/image/avatar/' . $teacher['avatar'];
+                    $avatarFilename = $teacher['avatar'];
+                    
+                    // Loại bỏ prefix 'web/image/avatar/' nếu có trong DB (do lỗi cũ)
+                    $avatarFilename = str_replace('web/image/avatar/', '', $avatarFilename);
+                    
+                    $avatarPath = __DIR__ . '/../../web/image/avatar/' . $avatarFilename;
                     if (file_exists($avatarPath)) {
-                        unlink($avatarPath);
+                        @unlink($avatarPath); // @ để tránh lỗi nếu không xóa được
                     }
                 }
                 jsonResponse(['success' => true]);
