@@ -2,7 +2,6 @@ export function useClassroom() {
   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
 
   async function createClassroom(formData) {
-    console.log('Creating classroom with data:', formData)
     const res = await fetch(`${apiBase}/classrooms`, {
       method: 'POST',
       body: formData,

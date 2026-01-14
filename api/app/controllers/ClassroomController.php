@@ -74,8 +74,7 @@ class ClassroomController
         }
 
         if (!empty($errors)) {
-            http_response_code(422);
-            jsonResponse(['error' => 'Validation failed', 'fields' => $errors]);
+            jsonResponse(['error' => 'Validation failed', 'fields' => $errors], 422);
             return;
         }
 
@@ -88,8 +87,7 @@ class ClassroomController
 
             jsonResponse(['success' => true, 'id' => $result['id'], 'avatar' => $result['avatar'], 'description' => $result['description'], 'building' => $result['building']]);
         } catch (Throwable $e) {
-            http_response_code(500);
-            jsonResponse(['error' => 'Internal server error', 'message' => $e->getMessage()]);
+            jsonResponse(['error' => 'Internal server error', 'message' => $e->getMessage()], 500);
         }
     }
 }
