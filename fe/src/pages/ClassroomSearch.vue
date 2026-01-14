@@ -1,8 +1,12 @@
 <template>
   <div class="search-page">
+    <div class="nav-header">
+      <router-link to="/" class="btn-back"> ← Quay lại</router-link>
+    </div>
+
     <h1>Tìm kiếm phòng học</h1>
 
-    <div class="search-box">
+    <form class="search-box" @submit.prevent="fetchData">
       <div class="form-row">
         <label>Tòa nhà:</label>
         <select v-model="building">
@@ -22,8 +26,8 @@
         />
       </div>
 
-      <button class="btn-search" @click="fetchData">Tìm kiếm</button>
-    </div>
+      <button type="submit" class="btn-search">Tìm kiếm</button>
+    </form>
 
     <div class="result-info">
       Số phòng học tìm thấy: <strong>{{ classrooms.length }}</strong>
@@ -63,22 +67,16 @@
 <script setup>
 import { ref, onMounted } from "vue";
 
-// --- THAY ĐỔI QUAN TRỌNG: Import từ file chung ---
-// Đảm bảo bạn đã tạo file src/constants/options.js như hướng dẫn trước
 import { BUILDINGS } from "@/constants/options.js";
 
 // Khai báo biến
 const classrooms = ref([]);
 
-// Thay vì gọi API, ta gán luôn danh sách chung vào đây
 const buildingOptions = ref(BUILDINGS);
 
 const building = ref("");
 const keyword = ref("");
 
-// --- ĐÃ XÓA hàm fetchBuildings() vì không cần nữa ---
-
-// HÀM: Lấy dữ liệu tìm kiếm (Vẫn giữ nguyên để lấy danh sách phòng)
 const fetchData = async () => {
   try {
     const response = await fetch(
@@ -92,7 +90,6 @@ const fetchData = async () => {
   }
 };
 
-// HÀM: Xóa phòng học (Giữ nguyên)
 const deleteRoom = async (id, name) => {
   if (!confirm(`Bạn chắc chắn muốn xóa phòng học: ${name}?`)) {
     return;
@@ -127,15 +124,45 @@ const deleteRoom = async (id, name) => {
   }
 };
 
+<<<<<<< Updated upstream
 // Tự động chạy khi vào trang
+=======
+import { useRouter } from "vue-router";
+const router = useRouter();
+
+const goToEdit = (id) => {
+  router.push(`/classroom/edit/${id}`);
+};
+
+>>>>>>> Stashed changes
 onMounted(() => {
-  // Không cần gọi fetchBuildings() nữa
-  fetchData(); // Chỉ cần lấy danh sách phòng học thôi
+  fetchData();
 });
 </script>
 
 <style scoped>
-/* CSS giữ nguyên như cũ */
+.nav-header {
+  margin-bottom: 15px;
+}
+
+.btn-back {
+  text-decoration: none;
+  color: #666;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  transition: all 0.3s;
+}
+
+.btn-back:hover {
+  background: #f0f0f0;
+  color: #333;
+  border-color: #999;
+}
+
 .search-page {
   padding: 20px;
   font-family: Arial, sans-serif;
